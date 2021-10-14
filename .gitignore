@@ -1,0 +1,9 @@
+# TEMPORAL IGNORES
+poetry.lock
+
+# Editor-related
+.vscode/settings.json
+
+# Enviroment
+.venv/
+.env
