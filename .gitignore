@@ -1,6 +1,9 @@
 # TEMPORAL IGNORES
 poetry.lock
 
+# Python
+__pycache__/
+
 # Editor-related
 .vscode/settings.json
 

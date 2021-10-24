@@ -1,0 +1,4 @@
+#!/bin/sh
+
+createdb bdduc
+sudo -u postgres psql -d bdduc -c "CREATE EXTENSION IF NOT EXISTS postgis;"
