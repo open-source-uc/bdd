@@ -8,6 +8,7 @@ from ..db import Campus, create_dbb, engine
 app = FastAPI()
 app.include_router(graphql_app, prefix="/graphql")
 
+
 @app.on_event("startup")
 def on_startup():
     create_dbb()

@@ -4,6 +4,7 @@ from sqlmodel import Field, SQLModel, Relationship, Session
 # sqlalchemy debería ser evitado, pero la API de sqlmodel no es tan completa aún
 from sqlalchemy.sql.sqltypes import Enum
 from sqlalchemy import Column
+
 # from geoalchemy2 import Geometry
 
 
@@ -149,7 +150,9 @@ class Faculty(SQLModel, table=True):
 
 
 class CategoryOfPlace(SQLModel, table=True):
-    category_id: Optional[int] = Field(default=None, foreign_key="placecategory.id", primary_key=True)
+    category_id: Optional[int] = Field(
+        default=None, foreign_key="placecategory.id", primary_key=True
+    )
     place_id: Optional[int] = Field(default=None, foreign_key="place.id", primary_key=True)
 
 
@@ -166,7 +169,8 @@ class Place(SQLModel, table=True):
     notes: Optional[str] = None
     description: Optional[str] = None
     categories: List["PlaceCategory"] = Relationship(
-        back_populates="places", link_model=CategoryOfPlace,
+        back_populates="places",
+        link_model=CategoryOfPlace,
     )
     parent_id: Optional[int] = Field(default=None, foreign_key="place.id")
     parent: "Place" = Relationship(back_populates="child")
@@ -191,6 +195,7 @@ class UniversityEvents(SQLModel, table=True):
 
 if __name__ == "__main__":
     from sqlmodel import create_engine, SQLModel
+
     # engine = create_engine("sqlite://", echo=True)  # in memory temp DB
     engine = create_engine("postgresql://benjavicente:benjavicente@localhost/bdduc", echo=True)
     SQLModel.metadata.create_all(engine)

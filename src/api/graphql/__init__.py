@@ -21,10 +21,11 @@ class Query:
     @strawberry.field
     def campuses(self) -> List[GraphQLCampus]:
         with Session(engine) as session:
-            return session.exec(select(Campus)).all() # type: ignore
+            return session.exec(select(Campus)).all()  # type: ignore
 
 
 # __init__.py
 from strawberry.fastapi import GraphQLRouter
+
 schema = strawberry.Schema(Query)
 graphql_app = GraphQLRouter(schema)
