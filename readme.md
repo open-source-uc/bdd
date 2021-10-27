@@ -66,4 +66,6 @@ mkdocs serve
 
 ## Tests
 
-TODO
+```bash
+python -m pytest
+```
