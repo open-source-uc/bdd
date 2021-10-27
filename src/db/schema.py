@@ -10,7 +10,7 @@ from sqlalchemy import Column
 
 from typing import Optional, List
 import enum
-from datetime import datetime
+from datetime import datetime, date
 
 
 # JoinTables tienen que estar antes de los modelos que unen
@@ -115,13 +115,20 @@ class RestrictionsAndGroup(SQLModel, table=True):
 
 PeriodEnum = enum.Enum("PeriodEnum", ["S1", "S2", "TAV"])
 
+class Term(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    year: int
+    period: PeriodEnum = Field(sa_column=Column(Enum(PeriodEnum)))
+    first_class_day: Optional[date] = None
+    last_class_day: Optional[date] = None
+    last_day: Optional[date] = None
 
 class Course(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     subject_id: int = Field(foreign_key="subject.id")
     subject: Subject = Relationship(back_populates="courses")
-    year: int
-    period: PeriodEnum = Field(sa_column=Column(Enum(PeriodEnum)))
+    term_id: int = Field(foreign_key="term.id")
+    term: Term = Relationship()
     section: int
     nrc: str
     schedule_summary: str
