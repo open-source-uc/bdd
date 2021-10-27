@@ -117,6 +117,7 @@ class RestrictionsAndGroup(SQLModel, table=True):
 
 PeriodEnum = enum.Enum("PeriodEnum", ["S1", "S2", "TAV"])
 
+
 class Term(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     year: int
@@ -124,6 +125,7 @@ class Term(SQLModel, table=True):
     first_class_day: Optional[date] = None
     last_class_day: Optional[date] = None
     last_day: Optional[date] = None
+
 
 class Course(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
