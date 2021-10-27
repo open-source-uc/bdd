@@ -1,9 +1,11 @@
-from sqlalchemy.orm import relation
-from sqlmodel import Field, SQLModel, Relationship, Session
+from sqlmodel import Field, SQLModel, Relationship
 
 # sqlalchemy debería ser evitado, pero la API de sqlmodel no es tan completa aún
-from sqlalchemy.sql.sqltypes import Enum
+from sqlalchemy.sql.sqltypes import Enum as SQLEnum
 from sqlalchemy import Column
+
+# NOTE(benjavicente): para las ubicaciones se podria usar postgis,
+#                     pero no hay un buen ORM para añadirlo a este esquema
 
 # from geoalchemy2 import Geometry
 
@@ -18,8 +20,8 @@ from datetime import datetime, date
 
 class SubjectEquivalencies(SQLModel, table=True):
     # __tablename__ = "subject_equivalencies"  # type: ignore
-    subject_id: int = Field(foreign_key="subject.id", primary_key=True)
-    equivalence_id: int = Field(foreign_key="subject.id", primary_key=True)
+    subject_id: Optional[int] = Field(default=None, foreign_key="subject.id", primary_key=True)
+    equivalence_id: Optional[int] = Field(default=None, foreign_key="subject.id", primary_key=True)
 
 
 class CoursesTeachers(SQLModel, table=True):
@@ -45,7 +47,7 @@ class Subject(SQLModel, table=True):
     prerequisites_raw: Optional[str] = None
     requirements_relation: Optional[RequirementRelationEnum] = Field(
         default=None,
-        sa_column=Column(Enum(RequirementRelationEnum)),
+        sa_column=Column(SQLEnum(RequirementRelationEnum)),
     )
     prerequisites: List["PrerequisitesOrGroupElement"] = Relationship(
         back_populates="subjects",
@@ -60,7 +62,7 @@ class Subject(SQLModel, table=True):
     def __repr__(self) -> str:
         return f"<{type(self).__name__} code={repr(self.code)}>"
 
-    # NOTA(benjavicente): pydantic no soporta getters y setters
+    # NOTE(benjavicente): pydantic no soporta getters y setters
     def get_prerequisites(self) -> List[List["Subject"]]:
         return [[g.subject for g in g_or.child_and_groups] for g_or in self.prerequisites]
 
@@ -118,32 +120,32 @@ PeriodEnum = enum.Enum("PeriodEnum", ["S1", "S2", "TAV"])
 class Term(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     year: int
-    period: PeriodEnum = Field(sa_column=Column(Enum(PeriodEnum)))
+    period: PeriodEnum = Field(sa_column=Column(SQLEnum(PeriodEnum)))
     first_class_day: Optional[date] = None
     last_class_day: Optional[date] = None
     last_day: Optional[date] = None
 
 class Course(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    subject_id: int = Field(foreign_key="subject.id")
+    subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
     subject: Subject = Relationship(back_populates="courses")
-    term_id: int = Field(foreign_key="term.id")
+    term_id: Optional[int] = Field(default=None, foreign_key="term.id")
     term: Term = Relationship()
     section: int
     nrc: str
     schedule_summary: str
-    campus_id: int = Field(foreign_key="campus.id")
+    campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
     campus: "Campus" = Relationship()
-    faculty_id: int = Field(foreign_key="faculty.id")
+    faculty_id: Optional[int] = Field(default=None, foreign_key="faculty.id")
     faculty: "Faculty" = Relationship()
-    format: str
-    category: str
-    fg_area: str
-    is_removable: bool
-    is_english: bool
-    need_special_aproval: bool
-    available_quota: int
-    total_quota: int
+    format: Optional[str]
+    category: Optional[str]
+    fg_area: Optional[str]
+    is_removable: Optional[bool]
+    is_english: Optional[bool]
+    need_special_aproval: Optional[bool]
+    available_quota: Optional[int]
+    total_quota: Optional[int]
     teachers: List["Teacher"] = Relationship(back_populates="courses", link_model=CoursesTeachers)
 
 
@@ -160,7 +162,7 @@ DayEnum = enum.Enum("DayEnum", ["L", "M", "W", "J", "V", "S"])
 class ClassSchedule:
     day: DayEnum
     module: int = Field(gt=1, lt=7)  # [1, 2, 3, 4, 5, 6, 7, 8]
-    classroom: str
+    classroom: Optional[str] = None
     course_id: Optional[str] = Field(default=None, foreign_key="course.id")
     course: Course = Relationship()
 
@@ -185,9 +187,9 @@ class School(SQLModel, table=True):
 class Faculty(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    website: str
-    description: str
-    campus_id: int = Field(default=None, foreign_key="campus.id")
+    website: Optional[str] = None
+    description: Optional[str] = None
+    campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
     campus: Campus = Relationship(back_populates="faculties")
 
 
@@ -204,7 +206,7 @@ class Place(SQLModel, table=True):
     lng: float
     # latLng: list = Field(sa_column=Column(Geometry("POINT")))
     # polygon: Optional[list] = Field(default=None, sa_column=Column(Geometry("POLYGON")))
-    campus_id: int = Field(default=None, foreign_key="campus.id")
+    campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
     campus: Campus = Relationship(back_populates="places")
     name: str
     floor: Optional[int] = None
@@ -220,8 +222,8 @@ class Place(SQLModel, table=True):
 
 
 class PlaceCategory(SQLModel, table=True):
-    name: str
     id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
     places: list[Place] = Relationship(back_populates="categories", link_model=CategoryOfPlace)
 
 
@@ -231,5 +233,5 @@ class UniversityEvents(SQLModel, table=True):
     start: datetime
     end: datetime
     tag: str
-    description: str
+    description: Optional[str]
     is_a_holiday: bool = False
