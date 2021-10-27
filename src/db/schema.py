@@ -33,39 +33,74 @@ RequirementRelationEnum = enum.Enum("RequirementRelationEnum", ["and", "or", "nu
 class Subject(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    credits: int
-    initials: str
+    credits: Optional[int] = None
+    code: str
     courses: List["Course"] = Relationship(back_populates="subject")
     school_id: Optional[int] = Field(default=None, foreign_key="school.id")
     school: Optional["School"] = Relationship(back_populates="subjects")
-    syllabus: str
-    academic_level: str
-    description: str
-    restrictions: str
-    prerequisites_raw: str
-    requirements_relation: RequirementRelationEnum = Field(
-        sa_column=Column(Enum(RequirementRelationEnum))
+    syllabus: Optional[str] = None
+    academic_level: Optional[str] = None
+    description: Optional[str] = None
+    restrictions: Optional[str] = None
+    prerequisites_raw: Optional[str] = None
+    requirements_relation: Optional[RequirementRelationEnum] = Field(
+        default=None,
+        sa_column=Column(Enum(RequirementRelationEnum)),
     )
-    # _prerequisites: list["PrerequisitesOrGroup"] = Relationship(back_populates="subjects")
+    prerequisites: List["PrerequisitesOrGroupElement"] = Relationship(
+        back_populates="subjects",
+    )
+
+    # TODO
     # equivalences: List["Subject"] = Relationship(
-    #     back_populates="equivalences", link_model=SubjectEquivalencies,
+    #     back_populates="equivalences",
+    #     link_model=SubjectEquivalencies,
     # )
 
-    # @property
-    # def prerequisites(self):
-    #     return [[C1 & C2] | [C1 & C3]]
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} code={repr(self.code)}>"
+
+    # NOTA(benjavicente): pydantic no soporta getters y setters
+    def get_prerequisites(self) -> List[List["Subject"]]:
+        return [[g.subject for g in g_or.child_and_groups] for g_or in self.prerequisites]
+
+    def set_prerequisites(self, value: List[List["Subject"]]):
+        group: List["PrerequisitesOrGroupElement"] = []
+        for and_group in value:
+            or_group_container = PrerequisitesOrGroupElement()
+            for subject in and_group:
+                subject_relation = PrerequisitesAndGroupElement(subject=subject)
+                or_group_container.child_and_groups.append(subject_relation)
+            group.append(or_group_container)
+        self.prerequisites = group
 
 
-class PrerequisitesOrGroup(SQLModel, table=True):
+class PrerequisitesOrGroupElement(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    subject_id: int = Field(foreign_key="subject.id", primary_key=True)
-    # subject: Subject = Relationship(back_populates="_prerequisites")
+    subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
+    subject: Subject = Relationship(back_populates="prerequisites")
+    child_and_groups: List["PrerequisitesAndGroupElement"] = Relationship(
+        sa_relationship_kwargs=dict(lazy="joined")
+    )
+    subjects: List["Subject"] = Relationship()
+
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} [{[g.subject for g in self.child_and_groups]}]>"
 
 
-class PrerequisitesAndGroup(SQLModel, table=True):
-    prerequisites_or_group_id: int = Field(foreign_key="restrictionsorgroup.id", primary_key=True)
-    course_id: int = Field(foreign_key="course.id", primary_key=True)
-    course: "Course" = Relationship()
+class PrerequisitesAndGroupElement(SQLModel, table=True):
+    prerequisites_or_group_element_id: Optional[int] = Field(
+        default=None,
+        foreign_key="PrerequisitesOrGroupElement.id".lower(),
+        primary_key=True,
+    )
+    prerequisites_or_group_element: PrerequisitesOrGroupElement = Relationship()
+    subject_id: Optional[int] = Field(
+        default=None,
+        foreign_key="subject.id",
+        primary_key=True,
+    )
+    subject: "Subject" = Relationship()
 
 
 class RestrictionsOrGroup(SQLModel, table=True):
