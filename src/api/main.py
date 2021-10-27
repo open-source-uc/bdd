@@ -12,6 +12,7 @@ app.include_router(graphql_app, prefix="/graphql")
 app.include_router(campus_router, prefix="/campus")
 app.include_router(subject_router, prefix="/subject")
 
+
 @app.on_event("startup")
 def on_startup():
     create_db()

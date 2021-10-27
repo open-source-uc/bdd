@@ -3,6 +3,7 @@ from sqlmodel import Session
 
 from ..db import engine
 
+
 def get_db() -> Iterator[Session]:
     db = Session(engine)
     try:
