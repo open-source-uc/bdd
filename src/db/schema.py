@@ -191,14 +191,3 @@ class UniversityEvents(SQLModel, table=True):
     tag: str
     description: str
     is_a_holiday: bool = False
-
-
-if __name__ == "__main__":
-    from sqlmodel import create_engine, SQLModel
-
-    # engine = create_engine("sqlite://", echo=True)  # in memory temp DB
-    engine = create_engine("postgresql://benjavicente:benjavicente@localhost/bdduc", echo=True)
-    SQLModel.metadata.create_all(engine)
-    session = Session(engine)
-    # session.add(Place(lat=1, lng=3, name="lugar x"))
-    # session.commit()
