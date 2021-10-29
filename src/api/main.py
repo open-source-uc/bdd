@@ -1,5 +1,7 @@
 from fastapi import FastAPI
-from fastapi_pagination import add_pagination
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from ..db import create_db
 

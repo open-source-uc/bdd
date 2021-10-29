@@ -7,6 +7,9 @@ __pycache__/
 # Editor-related
 .vscode/settings.json
 
+# Auto-generated
+docs-site
+
 # Enviroment
 .venv/
 .env
