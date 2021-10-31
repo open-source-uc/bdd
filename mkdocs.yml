@@ -21,9 +21,13 @@ nav:
   - Como contribuir:
     - contribute/index.md
     - contribute/docs.md
+    - contribute/orm.md
 markdown_extensions:
   - admonition
+  - abbr
   - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
