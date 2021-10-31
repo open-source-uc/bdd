@@ -1,3 +1,77 @@
 site_name: BDDUC
+site_description: La Base de Datos Unificada y Comunitaria de la comunidad Open Source eUC
+copyright: >
+  Creado por Benjamín Vicente, Nico Mc y Alfredo Enrione.
+  Mantenido por <a href="https://github.com/open-source-uc/bdd/graphs/contributors" target="_blank" rel="noopener">colaboradores</a>
+  en <a href="https://github.com/open-source-uc" target="_blank" rel="noopener">Open Source UC</a>
+repo_url: https://github.com/open-source-uc/bdd
+edit_uri: edit/main/docs/
+nav:
+  - index.md
+  - api.md
+  - Modelos:
+    - models/index.md
+  - Fuentes:
+    - sources/index.md
+    - sources/buscacursos.md
+    - sources/catalogo.md
+    - sources/calendario_academico.md
+    - sources/uc.md
+    - sources/almapp.md
+  - Como contribuir:
+    - contribute/index.md
+    - contribute/docs.md
+    - contribute/orm.md
+    - contribute/rest_api.md
+markdown_extensions:
+  - admonition
+  - abbr
+  - footnotes
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+plugins:
+  - search
+  - git-revision-date-localized:
+      locale: es
+extra_css:
+  - assets/extra.css
 theme:
   name: material
+  language: es
+  logo: assets/osuc-white.min.svg
+  favicon: assets/osuc-favicon.svg
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.indexes
+    - search.highlight
+  palette:
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      toggle:
+        icon: material/lightbulb
+        name: Cambiar a tema oscuro
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      toggle:
+        icon: material/lightbulb-outline
+        name: Cambiar a tema claro
+extra:
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://osuc.dev
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/OpenSource_eUC
+    - icon: fontawesome/brands/instagram
+      link: https://www.instagram.com/opensource_euc/
+    - icon: fontawesome/brands/github
+      link: https://github.com/open-source-uc
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/company/open-source-euc
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/VMXCNAvjPW
