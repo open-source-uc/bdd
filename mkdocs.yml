@@ -22,9 +22,11 @@ nav:
     - contribute/index.md
     - contribute/docs.md
     - contribute/orm.md
+    - contribute/rest_api.md
 markdown_extensions:
   - admonition
   - abbr
+  - footnotes
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.tabbed:
