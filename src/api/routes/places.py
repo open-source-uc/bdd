@@ -14,4 +14,5 @@ place_router = APIRouter()
 async def get_places(db: Session = Depends(get_db)):
     return db.exec(select(Place)).all()
 
+
 add_pagination(place_router)
