@@ -23,10 +23,11 @@ import bs4
 import re
 import itertools
 
-from .utils import clean_text, gather_routines, run_parse_strategy
+from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
 
 if TYPE_CHECKING:
     from .utils import Session, ParseStrategy, Semester
+    from .types import ScrappedCourse
 
 NON_EMPTY_TEXT_RE = re.compile(r"(.|\s)*\S(.|\s)*")
 ACADEMIC_UNIT_FINDER = {"attrs": {"style": None, "class": None}, "text": NON_EMPTY_TEXT_RE}
@@ -71,20 +72,20 @@ def parse_teachers(row_value_tag: "bs4.element.Tag"):
 COLUMNS_STRATEGIES: "ParseStrategy" = {
     "ncr": clean_text,
     "code": clean_text,
-    "allows_withdraw": clean_text,
-    "is_in_english": clean_text,
-    "section": clean_text,
-    "requires_special_approval": clean_text,
+    "allows_withdraw": lambda n: clean_text(n) == "SI",
+    "is_in_english": lambda n: clean_text(n) == "SI",
+    "section": tag_to_int_value,
+    "requires_special_approval": lambda n: clean_text(n) == "SI",
     "fg_area": clean_text,
-    "fomat": clean_text,
+    "format": clean_text,
     "category": clean_text,
     "name": clean_text,
     "teachers": parse_teachers,
     "campus": clean_text,
-    "credits": clean_text,
-    "total_vacancy": clean_text,
-    "available_vacancy": clean_text,
-    "reserved_vacancy": clean_text,
+    "credits": tag_to_int_value,
+    "total_vacancy": tag_to_int_value,
+    "available_vacancy": tag_to_int_value,
+    "reserved_vacancy": None,
     "schedule": parse_schedule,
     "add_to_calendar": None,
 }
@@ -101,7 +102,7 @@ async def parse_row(row: "bs4.element.Tag"):
 MATCH_RESULT_ROW = {"class": re.compile("resultados")}
 
 
-async def get_courses_raw(session: "Session", **params):
+async def get_courses_raw(session: "Session", **params) -> "list[ScrappedCourse]":
     "Obtiene los cursos utilizando, usando los parámetros del URL"
     async with session.get("/", params=params) as response:
         body = await response.read()

@@ -23,7 +23,7 @@ import bs4
 import re
 import html
 
-from .utils import clean_text, gather_routines, run_parse_strategy
+from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
 
 if TYPE_CHECKING:
     from .utils import Session, ParseStrategy
@@ -46,7 +46,7 @@ COLUMNS_STRATEGIES: "ParseStrategy" = {
     "code": clean_text,
     "name": clean_text,
     "level": clean_text,
-    "credits": lambda n: int(n.text),
+    "credits": tag_to_int_value,
     "is_active": lambda n: clean_text(n) == "Vigente",
     "description": parse_description,
     "requirements": None,

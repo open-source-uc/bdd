@@ -16,6 +16,10 @@ def clean_text(tag: "bs4.element.Tag") -> "str":
     return re.sub(r"\s{2,}", " ", tag.text).strip()
 
 
+def tag_to_int_value(tag: "bs4.element.Tag") -> "int":
+    return int(clean_text(tag))
+
+
 async def gather_routines(tasks: list[Coroutine]):
     "Wrapper de asyncio.gather, que utiliza listas en vez de tuplas"
     return list(await asyncio.gather(*tasks))
