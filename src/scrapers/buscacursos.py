@@ -17,17 +17,18 @@ asyncio.run(main())
 ```
 """
 
+import itertools
+import re
 from typing import TYPE_CHECKING
 
 import bs4
-import re
-import itertools
 
-from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
+from .utils import (clean_text, gather_routines, run_parse_strategy,
+                    tag_to_int_value)
 
 if TYPE_CHECKING:
-    from .utils import Session, ParseStrategy, Semester
     from .types import ScrappedCourse
+    from .utils import ParseStrategy, Session
 
 NON_EMPTY_TEXT_RE = re.compile(r"(.|\s)*\S(.|\s)*")
 ACADEMIC_UNIT_FINDER = {"attrs": {"style": None, "class": None}, "text": NON_EMPTY_TEXT_RE}
@@ -93,9 +94,9 @@ COLUMNS_STRATEGIES: "ParseStrategy" = {
 
 async def parse_row(row: "bs4.element.Tag"):
     data = {}
-    academic_unit_tag = row.find_previous_sibling(**ACADEMIC_UNIT_FINDER)
-    if isinstance(academic_unit_tag, bs4.element.Tag):
-        data["academic_unit"] = academic_unit_tag.text.strip()
+    faculty_tag = row.find_previous_sibling(**ACADEMIC_UNIT_FINDER)
+    if isinstance(faculty_tag, bs4.element.Tag):
+        data["faculty"] = faculty_tag.text.strip()
     return data | run_parse_strategy(COLUMNS_STRATEGIES, row.findChildren("td", recursive=False))
 
 
@@ -113,6 +114,21 @@ async def get_courses_raw(session: "Session", **params) -> "list[ScrappedCourse]
         return await gather_routines([parse_row(row) for row in results])
 
 
-async def get_courses(code: "str", year: "int", semester: "Semester", *, session: "Session"):
+async def get_courses(code: "str", year: "int", semester: int, *, session: "Session"):
     "Obtiene los cursos por la sigla, año y semestre (TAV == 3)"
     return await get_courses_raw(session, cxml_semestre=f"{year}-{semester}", cxml_sigla=code)
+
+
+async def get_available_terms(session: "Session"):
+    async with session.post("/") as response:
+        body = await response.read()
+    soup = bs4.BeautifulSoup(body, "lxml")
+
+    academic_period_selector = soup.find("select", {"name": "cxml_semestre"})
+    academic_periods: "list[tuple[int, int]]" = []
+    if isinstance(academic_period_selector, bs4.element.Tag):
+        for option in academic_period_selector.findChildren("option"):
+            if isinstance(option, bs4.element.Tag):
+                year, period = option.attrs["value"].split("-")
+                academic_periods.append((int(year), int(period)))
+    return academic_periods

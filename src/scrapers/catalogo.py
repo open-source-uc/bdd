@@ -17,17 +17,18 @@ asyncio.run(main())
 ```
 """
 
+import html
+import re
 from typing import TYPE_CHECKING, Optional, cast
 
 import bs4
-import re
-import html
 
-from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
+from .utils import (clean_text, gather_routines, run_parse_strategy,
+                    tag_to_int_value)
 
 if TYPE_CHECKING:
-    from .utils import Session, ParseStrategy
     from .types import ScrappedSubject
+    from .utils import ParseStrategy, Session
 
 
 DESCRIPTION_RE = re.compile(r"Descripción:\s*(.*)\s*$")
@@ -88,10 +89,7 @@ def parse_requirements(requirements_text: str):
     if requirements_text != "No tiene":
         or_groups = requirements_text.split("o")
         for group in map(str.strip, or_groups):
-            if "(" in group:
-                requirements.append([c.strip() for c in group.strip("()").split("y")])
-            else:
-                requirements.append([group])  # el grupo es en realidad un curso
+            requirements.append([c.strip() for c in group.strip("()").split("y")])
     return requirements
 
 
@@ -173,18 +171,3 @@ async def get_subjects(
         body = await response.read()
     soup = bs4.BeautifulSoup(body, "lxml")
     return await gather_routines([parse_row(row, session) for row in soup.select("tbody > tr")])
-
-
-async def get_available_terms(session: "Session"):
-    async with session.post("/") as response:
-        body = await response.read()
-    soup = bs4.BeautifulSoup(body, "lxml")
-
-    academic_period_selector = soup.find("select", {"name": "cxml_semestre"})
-    academic_periods: "list[tuple[int, int]]" = []
-    if isinstance(academic_period_selector, bs4.element.Tag):
-        for option in academic_period_selector.findChildren("option"):
-            if isinstance(option, bs4.element.Tag):
-                year, period = option.attrs["value"].split("-")
-                academic_periods.append((int(year), int(period)))
-    return academic_periods

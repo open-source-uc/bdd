@@ -1,5 +1,7 @@
 import os
-from sqlmodel import create_engine as _create_engine, SQLModel
+
+from sqlmodel import SQLModel
+from sqlmodel import create_engine as _create_engine
 
 from .schema import (
     Campus,
@@ -7,13 +9,14 @@ from .schema import (
     ClassSchedule,
     Course,
     CoursesTeachers,
+    DayEnum,
     Faculty,
+    PeriodEnum,
     Place,
     PlaceCategory,
     PrerequisitesAndGroupElement,
     PrerequisitesOrGroupElement,
     RequirementRelationEnum,
-    PeriodEnum,
     RestrictionsAndGroup,
     RestrictionsOrGroup,
     School,
@@ -37,4 +40,6 @@ engine = create_engine(
 
 
 def create_db():
+    # Se puede descomentar lo siguiente para partir la BDD de 0
+    # SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)

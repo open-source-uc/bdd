@@ -1,13 +1,11 @@
-from typing import TYPE_CHECKING, Callable, Any, Coroutine, Optional, Literal
-
-import re
 import asyncio
+import re
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional
 
 if TYPE_CHECKING:
     import bs4
     from aiohttp import ClientSession as Session
 
-    Semester = Literal[1, 2, 3]
     ParseStrategy = dict[str, Optional[Callable[[bs4.element.Tag], Any]]]
 
 

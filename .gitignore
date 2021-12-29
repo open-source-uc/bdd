@@ -13,3 +13,10 @@ docs-site
 # Enviroment
 .venv/
 .env
+
+# Root files (userfull for testing)
+/*.py
+/*.html
+
+# Cache
+.cache/*
