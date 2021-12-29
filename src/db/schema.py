@@ -115,7 +115,10 @@ class RestrictionsAndGroup(SQLModel, table=True):
     restriction: str
 
 
-PeriodEnum = enum.Enum("PeriodEnum", ["S1", "S2", "TAV"])
+class PeriodEnum(str, enum.Enum):
+    s1 = "S1"
+    s2 = "S2"
+    tav = "TAV"
 
 
 class Term(SQLModel, table=True):

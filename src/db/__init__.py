@@ -12,12 +12,15 @@ from .schema import (
     PlaceCategory,
     PrerequisitesAndGroupElement,
     PrerequisitesOrGroupElement,
+    RequirementRelationEnum,
+    PeriodEnum,
     RestrictionsAndGroup,
     RestrictionsOrGroup,
     School,
     Subject,
     SubjectEquivalencies,
     Teacher,
+    Term,
     UniversityEvents,
 )
 
