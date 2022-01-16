@@ -3,6 +3,7 @@ poetry.lock
 
 # Python
 __pycache__/
+.python-version
 
 # Editor-related
 .vscode/settings.json
