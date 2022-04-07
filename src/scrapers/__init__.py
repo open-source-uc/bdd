@@ -6,6 +6,7 @@ from aiohttp_client_cache.session import CachedSession
 
 from .buscacursos import get_available_terms, get_courses
 from .catalogo import get_subjects
+from .description import get_description
 
 
 class RequestCachedSessions:
