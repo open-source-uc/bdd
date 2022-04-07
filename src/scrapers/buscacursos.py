@@ -66,7 +66,7 @@ MISSING_TEACHERS_RE = re.compile(r"Sin Profesores")
 
 def parse_teachers(row_value_tag: "bs4.element.Tag"):
     raw_info = row_value_tag.text.strip()
-    if not MISSING_CLASSROM_RE.match(raw_info):
+    if not MISSING_TEACHERS_RE.match(raw_info):
         return raw_info.split(", ")
 
 
