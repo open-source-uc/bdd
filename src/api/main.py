@@ -7,7 +7,6 @@ from ..db import create_db
 from .graphql import graphql_app
 from .routes.campus import campus_router
 from .routes.events import event_router
-from .routes.faculties import faculty_router
 from .routes.places import place_router
 from .routes.schools import school_router
 from .routes.search import search_router
@@ -21,7 +20,6 @@ app.include_router(graphql_app, prefix="/graphql", tags=["GraphQL"])
 
 app.include_router(campus_router, prefix="/campus", tags=["Campus"])
 app.include_router(event_router, prefix="/events", tags=["Events"])
-app.include_router(faculty_router, prefix="/faculties", tags=["Faculties"])
 app.include_router(place_router, prefix="/places", tags=["Places"])
 app.include_router(school_router, prefix="/schools", tags=["Schools"])
 app.include_router(search_router, prefix="/search", tags=["Search"])

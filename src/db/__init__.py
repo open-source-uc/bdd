@@ -10,7 +10,6 @@ from .schema import (
     Course,
     CoursesTeachers,
     DayEnum,
-    Faculty,
     PeriodEnum,
     Place,
     PlaceCategory,

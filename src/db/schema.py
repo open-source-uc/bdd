@@ -157,8 +157,6 @@ class Course(SQLModel, table=True):
     schedule_summary: str
     campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
     campus: "Campus" = Relationship()
-    faculty_id: Optional[int] = Field(default=None, foreign_key="faculty.id")
-    faculty: "Faculty" = Relationship()
     format: Optional[str]
     category: Optional[str]
     fg_area: Optional[str]
@@ -174,7 +172,6 @@ class Course(SQLModel, table=True):
 class Campus(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    faculties: List["Faculty"] = Relationship()
     places: List["Place"] = Relationship()
 
 
@@ -212,15 +209,6 @@ class School(SQLModel, table=True):
     website: Optional[str] = None
     description: Optional[str] = None
     subjects: List[Subject] = Relationship(back_populates="school")
-
-
-class Faculty(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    website: Optional[str] = None
-    description: Optional[str] = None
-    campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
-    campus: Campus = Relationship(back_populates="faculties")
 
 
 class CategoryOfPlace(SQLModel, table=True):

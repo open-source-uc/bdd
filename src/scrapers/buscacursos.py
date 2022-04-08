@@ -94,9 +94,9 @@ COLUMNS_STRATEGIES: "ParseStrategy" = {
 
 async def parse_row(row: "bs4.element.Tag"):
     data = {}
-    faculty_tag = row.find_previous_sibling(**ACADEMIC_UNIT_FINDER)
-    if isinstance(faculty_tag, bs4.element.Tag):
-        data["faculty"] = faculty_tag.text.strip()
+    school_tag = row.find_previous_sibling(**ACADEMIC_UNIT_FINDER)
+    if isinstance(school_tag, bs4.element.Tag):
+        data["school"] = school_tag.text.strip()
     return data | run_parse_strategy(COLUMNS_STRATEGIES, row.findChildren("td", recursive=False))
 
 

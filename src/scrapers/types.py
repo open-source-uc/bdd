@@ -30,7 +30,7 @@ class ScrappedCourse(TypedDict):
     category: str
     code: str
     credits: int
-    faculty: str
+    school: str
     fg_area: str
     format: str
     is_in_english: bool

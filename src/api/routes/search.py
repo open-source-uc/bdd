@@ -6,7 +6,6 @@ from ...db import (
     ClassSchedule,
     Course,
     DayEnum,
-    Faculty,
     PeriodEnum,
     School,
     Subject,
@@ -96,14 +95,6 @@ def get_or_create_campus(campus_name: str, db: Session):
     return campus
 
 
-def get_or_crate_faculty(faculty_name: str, db: Session):
-    faculty = db.exec(select(Faculty).where(Faculty.name == faculty_name)).one_or_none()
-    if not faculty:
-        faculty = Faculty(name=faculty_name)
-        db.add(faculty)
-    return faculty
-
-
 def get_or_create_teachers(teachers_names: list[str], db: Session):
     teachers: list[Teacher] = []
     for teacher_name in teachers_names:
@@ -150,7 +141,6 @@ async def get_or_create_courses(subject: Subject, term: Term, db: Session):
             )
 
             new_course.campus = get_or_create_campus(new_course_data["campus"], db)
-            new_course.faculty = get_or_crate_faculty(new_course_data["faculty"], db)
             new_course.teachers = get_or_create_teachers(new_course_data["teachers"], db)
 
             for schedule_part_data in new_course_data["schedule"]:
