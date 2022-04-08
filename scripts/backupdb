@@ -1,0 +1,4 @@
+#!/bin/sh
+read -p "Database user: " DB_USER
+
+pg_dump -U$DB_USER -Fc bdduc > bdduc-$(date +%Y-%m-%d-%H%M%S).dump

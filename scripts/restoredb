@@ -1,0 +1,4 @@
+#!/bin/sh
+read -p "Database user: " DB_USER
+
+pg_restore -U$DB_USER -d bdduc -c -v --if-exists $1

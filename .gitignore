@@ -21,3 +21,6 @@ docs-site
 
 # Cache
 .cache/*
+
+# Database backups
+*.dump

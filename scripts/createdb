@@ -1,4 +1,14 @@
 #!/bin/sh
+TIMEZONE=America/Santiago
 
-createdb bdduc
+read -p "Create user: " DB_USER
+read -p "Password for $DB_USER: " DB_PASSWD
+
+sudo -u postgres psql -c "CREATE DATABASE bdduc;"
+sudo -u postgres psql -c "
+    CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWD';
+    ALTER ROLE $DB_USER SET client_encoding TO 'utf-8';
+    ALTER ROLE $DB_USER SET timezone TO '$TIMEZONE';
+    GRANT ALL PRIVILEGES ON DATABASE bdduc TO $DB_USER;
+    "
 sudo -u postgres psql -d bdduc -c "CREATE EXTENSION IF NOT EXISTS postgis;"
