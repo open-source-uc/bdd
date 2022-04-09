@@ -187,7 +187,7 @@ class DayEnum(str, enum.Enum):
 class ClassSchedule(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     day: DayEnum = Field(sa_column=Column(SQLEnum(DayEnum)))
-    module: int = Field(gt=1, lt=8)  # [1, 2, 3, 4, 5, 6, 7, 8]
+    module: int = Field(ge=1, le=8)  # [1, 2, 3, 4, 5, 6, 7, 8]
     classroom: Optional[str] = None
     type: Optional[str] = None
     course_id: Optional[int] = Field(default=None, foreign_key="course.id")
