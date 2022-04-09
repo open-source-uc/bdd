@@ -38,7 +38,7 @@ engine = create_engine(
 )
 
 
-def create_db():
-    # Se puede descomentar lo siguiente para partir la BDD de 0
-    # SQLModel.metadata.drop_all(engine)
+def create_db(clean: bool = False):
+    if clean:
+        SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
