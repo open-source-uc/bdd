@@ -62,12 +62,22 @@ def parse_schedule(row_value_tag: "bs4.element.Tag"):
 
 
 MISSING_TEACHERS_RE = re.compile(r"Sin Profesores")
+NONPERSON_TEACHERS_RE = re.compile(r"(Dirección Docente)|(Por Fijar)")
 
 
 def parse_teachers(row_value_tag: "bs4.element.Tag"):
     raw_info = row_value_tag.text.strip()
-    if not MISSING_TEACHERS_RE.match(raw_info):
-        return raw_info.split(", ")
+    if MISSING_TEACHERS_RE.match(raw_info):
+        return []
+    if NONPERSON_TEACHERS_RE.match(raw_info):
+        return [raw_info]
+
+    teachers = raw_info.split(", ")
+    for i, teacher in enumerate(teachers):
+        name_parts = teacher.split(" ")
+        teachers[i] = name_parts[-1] + " " + " ".join(name_parts[:-1])
+
+    return teachers
 
 
 COLUMNS_STRATEGIES: "ParseStrategy" = {
