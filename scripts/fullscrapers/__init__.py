@@ -1,5 +1,6 @@
 import logging
 import sys
+from time import time
 
 SCRIPT_LOG = "script"
 
@@ -9,7 +10,7 @@ console_handler = logging.StreamHandler(stream=sys.stdout)
 console_handler.setFormatter(formatter)
 console_handler.setLevel(logging.INFO)
 
-script_err_handler = logging.FileHandler(filename="log/script_err.log")
+script_err_handler = logging.FileHandler(filename=f"log/script_err_{int(time())}.log")
 script_err_handler.setFormatter(formatter)
 script_err_handler.setLevel(logging.ERROR)
 
