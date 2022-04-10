@@ -18,7 +18,10 @@ create_db()
 with Session(engine) as session:
     init_time = time()
 
-    asyncio.run(catalogo.get_full_catalogo(session))
-    # asyncio.run(buscacursos.get_full_buscacursos(session))
+    if sys.argv[1] in ("buscacursos", "bc"):
+        asyncio.run(buscacursos.get_full_buscacursos(session, int(sys.argv[2]), int(sys.argv[3])))
+
+    elif sys.argv[1] == "catalogo":
+        asyncio.run(catalogo.get_full_catalogo(session))
 
     print(f"Time elapsed: {(time() - init_time) / 60:1f} minutes")
