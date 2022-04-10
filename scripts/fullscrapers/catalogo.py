@@ -87,4 +87,5 @@ async def get_full_catalogo(db_session: Session) -> None:
         for code in initial_errors:
             await search_catalogo_code(code, db_session, catalogo_session)
 
+    if len(errors) != 0:
         log.error("Errors %s", ", ".join(errors))

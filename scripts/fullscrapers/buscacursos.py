@@ -204,4 +204,5 @@ async def get_full_buscacursos(db_session: Session, year: int, semester: int) ->
         for code in initial_errors:
             await search_bc_code(code, year, semester, db_session, bc_session)
 
+    if len(errors) != 0:
         log.error("Errors %s", ", ".join(errors))
