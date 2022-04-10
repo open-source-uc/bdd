@@ -24,3 +24,6 @@ docs-site
 
 # Database backups
 *.dump
+
+# Logs
+*.log
