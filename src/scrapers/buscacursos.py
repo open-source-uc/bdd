@@ -41,7 +41,7 @@ def parse_schedule_row(row: "bs4.element.Tag"):
     module_schedule, module_type, classroom, *_ = packed_data
     days_raw, hours_raw = module_schedule.split(":")
 
-    if not (days_raw or hours_raw):
+    if not (days_raw and hours_raw):
         return []
 
     actual_classroom = None if MISSING_CLASSROM_RE.match(classroom) else classroom
