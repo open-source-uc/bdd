@@ -1,5 +1,6 @@
 # TEMPORAL IGNORES
 poetry.lock
+requirements.txt
 
 # Python
 __pycache__/
