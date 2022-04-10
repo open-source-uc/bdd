@@ -28,7 +28,14 @@ class CoursesTeachers(SQLModel, table=True):
     teacher_id: Optional[int] = Field(default=None, foreign_key="teacher.id", primary_key=True)
 
 
-RequirementRelationEnum = enum.Enum("RequirementRelationEnum", ["and", "or", "null"])
+class RequirementRelationEnum(str, enum.Enum):
+    AND = "and"
+    OR = "or"
+
+    @classmethod
+    def from_catalogo(cls, value: str):
+        if value == "y": return cls(cls.AND)
+        if value == "o": return cls(cls.OR)
 
 
 class Subject(SQLModel, table=True):
@@ -154,7 +161,7 @@ class Course(SQLModel, table=True):
     term: Term = Relationship()
     section: int
     nrc: str
-    schedule_summary: str
+    schedule_summary: Optional[str]
     campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
     campus: "Campus" = Relationship()
     format: Optional[str]
