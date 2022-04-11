@@ -1,7 +1,5 @@
-import os
-
-from sqlmodel import SQLModel
-from sqlmodel import create_engine as _create_engine
+from sqlmodel import create_engine as _create_engine, SQLModel
+from ..config import config
 
 from .schema import (
     Campus,
@@ -27,14 +25,15 @@ from .schema import (
 )
 
 
-def create_engine(*, user: str, password: str, db_name: str, driver: str = "postgresql"):
-    return _create_engine(f"{driver}://{user}:{password}@localhost/{db_name}")
+def create_engine(*, user: str, password: str, db_name: str, host: str, driver: str = "postgresql"):
+    return _create_engine(f"{driver}://{user}:{password}@{host}/{db_name}", )
 
 
 engine = create_engine(
-    user=os.environ["DB_USER"],
-    password=os.environ["DB_PASWORD"],
-    db_name=os.environ["DB_NAME"],
+    user=config.db_user,
+    password=config.db_password,
+    host=config.db_host,
+    db_name=config.db_name,
 )
 
 

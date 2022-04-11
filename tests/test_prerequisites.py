@@ -1,7 +1,4 @@
-from dotenv import load_dotenv
 from sqlmodel.sql.expression import select
-
-load_dotenv()
 
 from sqlmodel import Session, delete
 from src.db import engine, Subject
