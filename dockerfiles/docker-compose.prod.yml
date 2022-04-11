@@ -1,0 +1,10 @@
+services:
+  api:
+    command: [ "uvicorn", "--port", "8000", "--host", "0.0.0.0", "src.api:app" ]
+
+  server:
+    build:
+      dockerfile: dockerfiles/services/server/Dockerfile
+      context: .
+    volumes:
+      - ./dockerfiles/services/server/nginx.conf:/etc/nginx/conf.d/default.conf

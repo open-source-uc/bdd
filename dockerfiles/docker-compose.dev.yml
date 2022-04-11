@@ -1,0 +1,25 @@
+services:
+  api:
+    volumes:
+      - ./src:/workspace/src
+      - ./readme.md:/workspace/readme.md
+    command: [ "uvicorn", "--port", "8000", "--host", "0.0.0.0", "--reload", "src.api:app" ]
+
+  docs:
+    build:
+      dockerfile: dockerfiles/services/docs/Dockerfile
+      context: .
+    volumes:
+      - ./docs:/workspace/docs
+      - ./mkdocs.yml:/workspace/mkdocs.yml
+      - ./.git:/workspace/.git
+    networks:
+      - public
+    command: ["mkdocs", "serve", "--dev-addr", "0.0.0.0:8080"]
+
+  server:
+    image: nginx:1.21
+    depends_on:
+      - docs
+    volumes:
+      - ./dockerfiles/services/server-dev/nginx.conf:/etc/nginx/conf.d/default.conf

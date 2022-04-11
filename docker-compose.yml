@@ -1,0 +1,41 @@
+# See ./docerfiles for development and production configuration
+version: '3.7'
+
+networks:
+  db:
+  public:
+
+volumes:
+  pg-data:
+
+services:
+  postgres:
+    image: postgres:14
+    networks:
+      - db
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=user
+      - POSTGRES_DB=database
+
+  api:
+    build:
+      dockerfile: dockerfiles/services/api/Dockerfile
+      context: .
+    networks:
+      - db
+      - public
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+    ports:
+      - 8000:8000
+
+  server:
+    networks:
+      - public
+    depends_on:
+      - api
+    ports:
+      - 80:80
