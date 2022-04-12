@@ -55,18 +55,18 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                 try:
                     db_session.add(subject)
                     db_session.commit()
-                except:
+                except Exception:
                     log.error("Cannot save %s", s["code"], exc_info=True)
                     errors.add(s["code"])
                     db_session.rollback()
                 else:
                     schools_cache[s["school_name"]] = school_id
 
-            except:
+            except Exception:
                 log.error("Cannot process %s", s["code"], exc_info=True)
                 errors.add(s["code"])
 
-    except:
+    except Exception:
         log.error("Cannot process search %s", base_code, exc_info=True)
         errors.add(base_code)
 

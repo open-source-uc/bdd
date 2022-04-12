@@ -129,7 +129,7 @@ async def search_bc_code(
                 try:
                     db_session.add(course)
                     db_session.commit()
-                except:
+                except Exception:
                     log.error("Cannot save %s-%i", c["code"], c["section"], exc_info=True)
                     errors.add(c["code"])
                     db_session.rollback()
@@ -137,13 +137,13 @@ async def search_bc_code(
                     campus_cache[c["campus"]] = campus_id
                     courses_cache.add(course_section_term)
 
-            except:
+            except Exception:
                 log.error("Cannot process %s-%i", c["code"], c["section"], exc_info=True)
                 errors.add(c["code"])
 
         return len(courses)
 
-    except:
+    except Exception:
         log.error("Cannot process search %s", base_code, exc_info=True)
         errors.add(base_code)
         return 0
