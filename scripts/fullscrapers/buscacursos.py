@@ -14,9 +14,6 @@ from src.scrapers import get_courses, request
 from .catalogo import search_catalogo_code
 from . import log
 
-
-LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-DIGITS = "0123456789"
 MAX_BC = 50
 
 # Cache
