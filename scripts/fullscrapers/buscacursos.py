@@ -1,4 +1,5 @@
 from sqlmodel import Session, select
+from scripts.fullscrapers.code_iterator import CodeIterator
 from src.db import (
     Campus,
     ClassSchedule,
@@ -162,40 +163,10 @@ async def get_full_buscacursos(db_session: Session, year: int, semester: int) ->
 
     # Search all
     async with request.buscacursos() as bc_session:
-        for l1 in LETTERS:
-            code = l1
-            if await search_bc_code(code, year, semester, db_session, bc_session) < MAX_BC:
-                continue
-
-            for l2 in LETTERS:
-                code = l1 + l2
-                if await search_bc_code(code, year, semester, db_session, bc_session) < MAX_BC:
-                    continue
-
-                for l3 in LETTERS:
-                    code = l1 + l2 + l3
-                    if await search_bc_code(code, year, semester, db_session, bc_session) < MAX_BC:
-                        continue
-
-                    for n1 in DIGITS:
-                        code = l1 + l2 + l3 + n1
-                        if (
-                            await search_bc_code(code, year, semester, db_session, bc_session)
-                            < MAX_BC
-                        ):
-                            continue
-
-                        for n2 in DIGITS:
-                            code = l1 + l2 + l3 + n1 + n2
-                            if (
-                                await search_bc_code(code, year, semester, db_session, bc_session)
-                                < MAX_BC
-                            ):
-                                continue
-
-                            for n3 in DIGITS:
-                                code = l1 + l2 + l3 + n1 + n2 + n3
-                                await search_bc_code(code, year, semester, db_session, bc_session)
+        code_generator = CodeIterator(); 
+        for code in code_generator:
+            if await search_bc_code(code, year, semester, db_session, bc_session) >= MAX_BC:
+                code_generator.add_depth()
 
     # Retry errors with new session
     async with request.buscacursos() as bc_session:
