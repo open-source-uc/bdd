@@ -1,6 +1,6 @@
-import itertools
 from string import ascii_uppercase
 from sqlmodel import Session, select
+from scripts.fullscrapers.code_iterator import CodeIterator
 from src.db import School, Subject
 from src.db.schema import RequirementRelationEnum
 from src.scrapers import get_subjects, get_description, request
@@ -11,8 +11,9 @@ from . import log
 schools_cache: dict[str, int] = {}
 errors: set[str] = set()
 
+MAX_CATALOGO = 1000
 
-async def search_catalogo_code(base_code: str, db_session: Session, catalogo_session) -> None:
+async def search_catalogo_code(base_code: str, db_session: Session, catalogo_session) -> int:
     "Search code in Catalogo and save subjects to DB"
     log.info("Searching %s in Catalogo", base_code)
 
@@ -65,17 +66,23 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
             except Exception:
                 log.error("Cannot process %s", s["code"], exc_info=True)
                 errors.add(s["code"])
+        
+        return len(subjects)
 
     except Exception:
         log.error("Cannot process search %s", base_code, exc_info=True)
         errors.add(base_code)
+        return 0
 
 
 async def get_full_catalogo(db_session: Session) -> None:
     # Search all
     async with request.catalogo() as catalogo_session:
-        for code_letters in itertools.product(ascii_uppercase, repeat=3):
-            await search_catalogo_code("".join(code_letters), db_session, catalogo_session)
+        code_generator = CodeIterator();
+        for code in code_generator:
+            if await search_catalogo_code(code, db_session, catalogo_session) >= MAX_CATALOGO:
+                code_generator.add_depth()
+            
 
     # Retry errors with new session
     async with request.catalogo() as catalogo_session:
