@@ -9,10 +9,11 @@ import asyncio
 from time import time
 from sqlmodel import Session
 from src.db import engine, create_db
-from fullscrapers import buscacursos, catalogo
+from fullscrapers import buscacursos, catalogo, initialize_log
 
 
 # Start script
+initialize_log()
 create_db()
 
 with Session(engine) as session:
