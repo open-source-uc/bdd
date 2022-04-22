@@ -1,18 +1,17 @@
-from sqlmodel import Field, SQLModel, Relationship
+import enum
+from datetime import date, datetime
+from typing import List, Optional
 
+from sqlalchemy import Column, Index, sql
+from sqlalchemy.sql.expression import true
 # sqlalchemy debería ser evitado, pero la API de sqlmodel no es tan completa aún
 from sqlalchemy.sql.sqltypes import Enum as SQLEnum
-from sqlalchemy import Column
+from sqlmodel import Field, Relationship, SQLModel
 
 # NOTE(benjavicente): para las ubicaciones se podria usar postgis,
 #                     pero no hay un buen ORM para añadirlo a este esquema
 
 # from geoalchemy2 import Geometry
-
-
-from typing import Optional, List
-import enum
-from datetime import datetime, date
 
 
 # JoinTables tienen que estar antes de los modelos que unen
@@ -29,7 +28,14 @@ class CoursesTeachers(SQLModel, table=True):
     teacher_id: Optional[int] = Field(default=None, foreign_key="teacher.id", primary_key=True)
 
 
-RequirementRelationEnum = enum.Enum("RequirementRelationEnum", ["and", "or", "null"])
+class RequirementRelationEnum(str, enum.Enum):
+    AND = "and"
+    OR = "or"
+
+    @classmethod
+    def from_catalogo(cls, value: str):
+        if value == "y": return cls(cls.AND)
+        if value == "o": return cls(cls.OR)
 
 
 class Subject(SQLModel, table=True):
@@ -40,7 +46,7 @@ class Subject(SQLModel, table=True):
     courses: List["Course"] = Relationship(back_populates="subject")
     school_id: Optional[int] = Field(default=None, foreign_key="school.id")
     school: Optional["School"] = Relationship(back_populates="subjects")
-    syllabus: Optional[str] = None
+    syllabus: Optional[str] = Field(None, index=False)
     academic_level: Optional[str] = None
     description: Optional[str] = None
     restrictions: Optional[str] = None
@@ -52,6 +58,13 @@ class Subject(SQLModel, table=True):
     prerequisites: List["PrerequisitesOrGroupElement"] = Relationship(
         back_populates="subjects",
     )
+    # __table_args__ = (
+    #     Index(
+    #         "subject_syllabus_full_text_search_index",
+    #         sql.func.to_tsvector("english", syllabus),
+    #         postgresql_using="gin",
+    #     ),
+    # )
 
     # TODO
     # equivalences: List["Subject"] = Relationship(
@@ -120,6 +133,16 @@ class PeriodEnum(str, enum.Enum):
     s2 = "S2"
     tav = "TAV"
 
+    # NOTA(benjavicente): No se como se puede hacer esto más simple
+
+    def __int__(self):
+        # Convierte las siglas a numeros al hacer int(periodo)
+        return ["S1", "S2", "TAV"].index(self.value) + 1
+
+    @classmethod
+    def from_int(cls, value: int):
+        return cls(["S1", "S2", "TAV"][value - 1])
+
 
 class Term(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -138,16 +161,15 @@ class Course(SQLModel, table=True):
     term: Term = Relationship()
     section: int
     nrc: str
-    schedule_summary: str
+    schedule_summary: Optional[str]
     campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
     campus: "Campus" = Relationship()
-    faculty_id: Optional[int] = Field(default=None, foreign_key="faculty.id")
-    faculty: "Faculty" = Relationship()
     format: Optional[str]
     category: Optional[str]
     fg_area: Optional[str]
     is_removable: Optional[bool]
     is_english: Optional[bool]
+    schedule: List["ClassSchedule"] = Relationship(back_populates="course")
     need_special_aproval: Optional[bool]
     available_quota: Optional[int]
     total_quota: Optional[int]
@@ -157,19 +179,26 @@ class Course(SQLModel, table=True):
 class Campus(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    faculties: List["Faculty"] = Relationship()
     places: List["Place"] = Relationship()
 
 
-DayEnum = enum.Enum("DayEnum", ["L", "M", "W", "J", "V", "S"])
+class DayEnum(str, enum.Enum):
+    L = "L"
+    M = "M"
+    W = "W"
+    J = "J"
+    V = "V"
+    S = "S"
 
 
-class ClassSchedule:
-    day: DayEnum
-    module: int = Field(gt=1, lt=7)  # [1, 2, 3, 4, 5, 6, 7, 8]
+class ClassSchedule(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    day: DayEnum = Field(sa_column=Column(SQLEnum(DayEnum)))
+    module: int = Field(ge=1, le=8)  # [1, 2, 3, 4, 5, 6, 7, 8]
     classroom: Optional[str] = None
-    course_id: Optional[str] = Field(default=None, foreign_key="course.id")
-    course: Course = Relationship()
+    type: Optional[str] = None
+    course_id: Optional[int] = Field(default=None, foreign_key="course.id")
+    course: Course = Relationship(back_populates="schedule")
 
 
 class Teacher(SQLModel, table=True):
@@ -187,15 +216,6 @@ class School(SQLModel, table=True):
     website: Optional[str] = None
     description: Optional[str] = None
     subjects: List[Subject] = Relationship(back_populates="school")
-
-
-class Faculty(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    website: Optional[str] = None
-    description: Optional[str] = None
-    campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
-    campus: Campus = Relationship(back_populates="faculties")
 
 
 class CategoryOfPlace(SQLModel, table=True):

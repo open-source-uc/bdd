@@ -1,5 +1,7 @@
 import os
-from sqlmodel import create_engine as _create_engine, SQLModel
+
+from sqlmodel import SQLModel
+from sqlmodel import create_engine as _create_engine
 
 from .schema import (
     Campus,
@@ -7,13 +9,13 @@ from .schema import (
     ClassSchedule,
     Course,
     CoursesTeachers,
-    Faculty,
+    DayEnum,
+    PeriodEnum,
     Place,
     PlaceCategory,
     PrerequisitesAndGroupElement,
     PrerequisitesOrGroupElement,
     RequirementRelationEnum,
-    PeriodEnum,
     RestrictionsAndGroup,
     RestrictionsOrGroup,
     School,
@@ -36,5 +38,7 @@ engine = create_engine(
 )
 
 
-def create_db():
+def create_db(clean: bool = False):
+    if clean:
+        SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)

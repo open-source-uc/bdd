@@ -1,8 +1,10 @@
 # TEMPORAL IGNORES
 poetry.lock
+requirements.txt
 
 # Python
 __pycache__/
+.python-version
 
 # Editor-related
 .vscode/settings.json
@@ -13,4 +15,16 @@ docs-site
 # Enviroment
 .venv/
 .env
-.python-version
+
+# Root files (userfull for testing)
+/*.py
+/*.html
+
+# Cache
+.cache/*
+
+# Database backups
+*.dump
+
+# Logs
+*.log
