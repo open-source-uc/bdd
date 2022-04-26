@@ -47,11 +47,11 @@ def get_all_course_sections_by_academic_period(
     # TODO: inlcude: { model: Course, where: course.randido_en = periodo academico }
     return db.exec(
         select(Course, Subject, Term).where(
-            Course.subject_id == id
-            and Term.year == year
-            and Term.period == period
-            and Course.subject_id == Subject.id
-            and Term.id == Course.term_id
+            Course.subject_id == id,
+            Term.year == year,
+            Term.period == period,
+            Course.subject_id == Subject.id,
+            Term.id == Course.term_id,
         )
     ).all()
 
