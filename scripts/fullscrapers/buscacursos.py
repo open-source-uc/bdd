@@ -83,7 +83,17 @@ async def search_bc_code(
                     campus = db_session.exec(campus_query).one_or_none()
                     if not campus:
                         campus = Campus(name=c["campus"])
-                        db_session.add(campus)
+                        try:
+                            db_session.add(campus)
+                            db_session.commit()
+                        except Exception:
+                            log.error("Cannot save campus: %s", c["campus"], exc_info=True)
+                            errors.add(c["code"])
+                            db_session.rollback()
+                            continue
+                        else:
+                            campus_cache[c["campus"]] = campus_id
+
                     campus_id = campus.id
                 course.campus_id = campus_id
 
@@ -102,7 +112,15 @@ async def search_bc_code(
                     ).one_or_none()
                     if not teacher:
                         teacher = Teacher(name=new_teacher_name)
-                        db_session.add(teacher)
+                        try:
+                            db_session.add(teacher)
+                            db_session.commit()
+                        except Exception:
+                            log.error("Cannot save teacher: %s", c[new_teacher_name], exc_info=True)
+                            errors.add(c["code"])
+                            db_session.rollback()
+                            continue
+
                     course.teachers.append(teacher)
 
                 # Set schedule if changed (or new)
@@ -132,7 +150,6 @@ async def search_bc_code(
                     errors.add(c["code"])
                     db_session.rollback()
                 else:
-                    campus_cache[c["campus"]] = campus_id
                     courses_cache.add(course_section_term)
 
             except Exception:

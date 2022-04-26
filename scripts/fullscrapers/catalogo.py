@@ -13,6 +13,7 @@ errors: set[str] = set()
 
 MAX_CATALOGO = 1000
 
+
 async def search_catalogo_code(base_code: str, db_session: Session, catalogo_session) -> int:
     "Search code in Catalogo and save subjects to DB"
     log.info("Searching %s in Catalogo", base_code)
@@ -49,6 +50,17 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                     if not school:
                         school = School(name=s["school_name"])
                         db_session.add(school)
+                        try:
+                            db_session.add(school)
+                            db_session.commit()
+                        except Exception:
+                            log.error("Cannot save school: %s", s["school_name"], exc_info=True)
+                            errors.add(s["code"])
+                            db_session.rollback()
+                            continue
+                        else:
+                            schools_cache[s["school_name"]] = school_id
+
                     school_id = school.id
                 subject.school_id = school_id
 
@@ -60,13 +72,11 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                     log.error("Cannot save %s", s["code"], exc_info=True)
                     errors.add(s["code"])
                     db_session.rollback()
-                else:
-                    schools_cache[s["school_name"]] = school_id
 
             except Exception:
                 log.error("Cannot process %s", s["code"], exc_info=True)
                 errors.add(s["code"])
-        
+
         return len(subjects)
 
     except Exception:
@@ -78,11 +88,10 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
 async def get_full_catalogo(db_session: Session) -> None:
     # Search all
     async with request.catalogo() as catalogo_session:
-        code_generator = CodeIterator();
+        code_generator = CodeIterator()
         for code in code_generator:
             if await search_catalogo_code(code, db_session, catalogo_session) >= MAX_CATALOGO:
                 code_generator.add_depth()
-            
 
     # Retry errors with new session
     async with request.catalogo() as catalogo_session:
