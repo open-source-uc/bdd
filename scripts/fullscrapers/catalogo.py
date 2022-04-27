@@ -9,6 +9,7 @@ from . import log
 
 # Cache
 schools_cache: dict[str, int] = {}
+subjects_cache: set[str] = set()
 errors: set[str] = set()
 
 MAX_CATALOGO = 1000
@@ -21,8 +22,10 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
     try:
         subjects = await get_subjects(base_code, session=catalogo_session)
         for s in subjects:
-            log.info("Found %s: %s", s["code"], s["name"])
+            if s["code"] in subjects_cache:
+                continue
 
+            log.info("Found %s: %s", s["code"], s["name"])
             try:
                 # Get or create instance
                 subject_query = select(Subject).where(Subject.code == s["code"])
@@ -72,6 +75,8 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                     log.error("Cannot save %s", s["code"], exc_info=True)
                     errors.add(s["code"])
                     db_session.rollback()
+                else:
+                    subjects_cache.add(s["code"])
 
             except Exception:
                 log.error("Cannot process %s", s["code"], exc_info=True)
