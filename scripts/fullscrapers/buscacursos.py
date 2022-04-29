@@ -42,9 +42,9 @@ async def search_bc_code(
             try:
                 # Get or create instance
                 course_query = select(Course).where(
-                    Course.section == c["section"]
-                    and Course.term_id == term_id
-                    and Course.subject.code == c["code"]
+                    Course.section == c["section"],
+                    Course.term_id == term_id,
+                    Course.subject.code == c["code"],
                 )
                 course: Course = db_session.exec(course_query).one_or_none()
                 if not course:
@@ -83,7 +83,17 @@ async def search_bc_code(
                     campus = db_session.exec(campus_query).one_or_none()
                     if not campus:
                         campus = Campus(name=c["campus"])
-                        db_session.add(campus)
+                        try:
+                            db_session.add(campus)
+                            db_session.commit()
+                        except Exception:
+                            log.error("Cannot save campus: %s", c["campus"], exc_info=True)
+                            errors.add(c["code"])
+                            db_session.rollback()
+                            continue
+                        else:
+                            campus_cache[c["campus"]] = campus_id
+
                     campus_id = campus.id
                 course.campus_id = campus_id
 
@@ -102,7 +112,15 @@ async def search_bc_code(
                     ).one_or_none()
                     if not teacher:
                         teacher = Teacher(name=new_teacher_name)
-                        db_session.add(teacher)
+                        try:
+                            db_session.add(teacher)
+                            db_session.commit()
+                        except Exception:
+                            log.error("Cannot save teacher: %s", c[new_teacher_name], exc_info=True)
+                            errors.add(c["code"])
+                            db_session.rollback()
+                            continue
+
                     course.teachers.append(teacher)
 
                 # Set schedule if changed (or new)
@@ -132,7 +150,6 @@ async def search_bc_code(
                     errors.add(c["code"])
                     db_session.rollback()
                 else:
-                    campus_cache[c["campus"]] = campus_id
                     courses_cache.add(course_section_term)
 
             except Exception:
@@ -150,7 +167,7 @@ async def search_bc_code(
 async def get_full_buscacursos(db_session: Session, year: int, semester: int) -> None:
     # Set term
     period = PeriodEnum.from_int(semester)
-    term_query = select(Term).where(Term.year == year and Term.period == period)
+    term_query = select(Term).where(Term.year == year, Term.period == period)
     term = db_session.exec(term_query).one_or_none()
     if not term:
         term = Term(year=year, period=period)
@@ -160,7 +177,7 @@ async def get_full_buscacursos(db_session: Session, year: int, semester: int) ->
 
     # Search all
     async with request.buscacursos() as bc_session:
-        code_generator = CodeIterator(); 
+        code_generator = CodeIterator()
         for code in code_generator:
             if await search_bc_code(code, year, semester, db_session, bc_session) >= MAX_BC:
                 code_generator.add_depth()

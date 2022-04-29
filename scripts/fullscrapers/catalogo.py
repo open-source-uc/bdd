@@ -9,9 +9,11 @@ from . import log
 
 # Cache
 schools_cache: dict[str, int] = {}
+subjects_cache: set[str] = set()
 errors: set[str] = set()
 
 MAX_CATALOGO = 1000
+
 
 async def search_catalogo_code(base_code: str, db_session: Session, catalogo_session) -> int:
     "Search code in Catalogo and save subjects to DB"
@@ -20,8 +22,10 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
     try:
         subjects = await get_subjects(base_code, session=catalogo_session)
         for s in subjects:
-            log.info("Found %s: %s", s["code"], s["name"])
+            if s["code"] in subjects_cache:
+                continue
 
+            log.info("Found %s: %s", s["code"], s["name"])
             try:
                 # Get or create instance
                 subject_query = select(Subject).where(Subject.code == s["code"])
@@ -49,6 +53,17 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                     if not school:
                         school = School(name=s["school_name"])
                         db_session.add(school)
+                        try:
+                            db_session.add(school)
+                            db_session.commit()
+                        except Exception:
+                            log.error("Cannot save school: %s", s["school_name"], exc_info=True)
+                            errors.add(s["code"])
+                            db_session.rollback()
+                            continue
+                        else:
+                            schools_cache[s["school_name"]] = school_id
+
                     school_id = school.id
                 subject.school_id = school_id
 
@@ -61,12 +76,12 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                     errors.add(s["code"])
                     db_session.rollback()
                 else:
-                    schools_cache[s["school_name"]] = school_id
+                    subjects_cache.add(s["code"])
 
             except Exception:
                 log.error("Cannot process %s", s["code"], exc_info=True)
                 errors.add(s["code"])
-        
+
         return len(subjects)
 
     except Exception:
@@ -78,11 +93,10 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
 async def get_full_catalogo(db_session: Session) -> None:
     # Search all
     async with request.catalogo() as catalogo_session:
-        code_generator = CodeIterator();
+        code_generator = CodeIterator()
         for code in code_generator:
             if await search_catalogo_code(code, db_session, catalogo_session) >= MAX_CATALOGO:
                 code_generator.add_depth()
-            
 
     # Retry errors with new session
     async with request.catalogo() as catalogo_session:

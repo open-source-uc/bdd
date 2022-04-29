@@ -71,7 +71,7 @@ async def get_or_create_subject(code: str, db: Session):
 
 
 async def get_or_create_academic_term(year: int, period: PeriodEnum, db: Session):
-    term = db.exec(select(Term).where(Term.year == year and Term.period == period)).one_or_none()
+    term = db.exec(select(Term).where(Term.year == year, Term.period == period)).one_or_none()
     if term:
         return term
 
@@ -110,7 +110,7 @@ async def get_or_create_courses(subject: Subject, term: Term, db: Session):
     courses_query = (
         select(Course)
         .join(Term)
-        .where(Term.year == term.year and Term.period == term.period)
+        .where(Term.year == term.year, Term.period == term.period)
         .join(Subject)
         .where(Subject.code == subject.code)
     )
