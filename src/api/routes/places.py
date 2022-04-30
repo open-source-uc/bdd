@@ -10,9 +10,9 @@ from ..utils import get_db
 place_router = APIRouter()
 
 
-@place_router.get("/", response_model=list[Place])
+@place_router.get("/", response_model=Page[Place])
 async def get_places(db: Session = Depends(get_db)):
-    return db.exec(select(Place)).all()
+    return paginate(db, select(Place))
 
 
 add_pagination(place_router)
