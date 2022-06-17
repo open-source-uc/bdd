@@ -1,6 +1,6 @@
 all: requirements.txt
 
-requirements.txt:
+requirements.txt: poetry.lock
 	poetry export -f requirements.txt -o requirements.txt
 
 
@@ -9,13 +9,15 @@ requirements.txt:
 .PHONY: prod
 prod: requirements.txt
 	docker-compose \
+		--project-name bdd-uc-prod \
 		-f docker-compose.yml \
 		-f dockerfiles/docker-compose.prod.yml \
-		up --build
+		up --build --project-name bdd-uc-prod
 
 .PHONY: dev
 dev: requirements.txt
 	docker-compose \
+		--project-name bdd-uc-dev \
 		-f docker-compose.yml \
 		-f dockerfiles/docker-compose.dev.yml \
 		up --build
