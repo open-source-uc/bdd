@@ -1,3 +1,6 @@
+# La diferencia de desarrollo y producción es simplemente
+# la opción de reloading, que se puede dejar en docker-compose
+
 FROM python:3.10
 WORKDIR /workspace
 
@@ -5,5 +8,7 @@ RUN pip install "poetry>=1,<2"
 
 COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false
-
 RUN poetry install
+
+COPY readme.md ./
+COPY src/ src/

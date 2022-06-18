@@ -13,6 +13,7 @@
 		"ahmadalli.vscode-nginx-conf",
 		"EditorConfig.EditorConfig",
 		"aaron-bond.better-comments",
+		"ms-python.isort"
 	],
 	"postAttachCommand": ["echo", "run the server with\nuvicorn --reload src.api:app --host 0.0.0.0\n"]
 }

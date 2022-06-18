@@ -12,7 +12,7 @@ prod: requirements.txt
 		--project-name bdd-uc-prod \
 		-f docker-compose.yml \
 		-f dockerfiles/docker-compose.prod.yml \
-		up --build --project-name bdd-uc-prod
+		up --build
 
 .PHONY: dev
 dev: requirements.txt

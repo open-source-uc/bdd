@@ -3,8 +3,3 @@ location /docs/ {
     alias /var/www/;
     index index.html;
 }
-
-# API proxy
-location /api/ {
-    proxy_pass http://api:8000/;
-}
