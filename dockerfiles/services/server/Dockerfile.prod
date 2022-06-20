@@ -1,0 +1,27 @@
+# Hay que generar la documentación, que consiste en arhcivos estáticos
+FROM python:3.10 AS doc-generator
+WORKDIR /workspace
+
+# Install
+RUN pip install "poetry>=1,<2"
+COPY pyproject.toml poetry.lock ./
+ENV PATH=.venv/bin:$PATH
+RUN poetry config virtualenvs.create false
+RUN poetry install
+
+# Build
+COPY docs docs
+COPY mkdocs.yml .
+COPY .git .git
+RUN mkdocs build -d docs-build
+
+# Server
+FROM nginx:1.21-alpine as server
+WORKDIR /workspace
+
+# Config file
+COPY ./dockerfiles/services/server/nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./dockerfiles/services/server/nginx.conf.prod /etc/nginx/extends/prod.conf
+
+# Static files
+COPY --from=doc-generator /workspace/docs-build/ /var/www/

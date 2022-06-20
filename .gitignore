@@ -11,6 +11,7 @@ __pycache__/
 
 # Auto-generated
 docs-site
+requirements.txt
 
 # Enviroment
 .venv/
