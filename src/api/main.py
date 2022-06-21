@@ -5,6 +5,7 @@ from ..config import config
 
 from .graphql import graphql_app
 from .routes.campus import campus_router
+from .routes.courses import course_router
 from .routes.events import event_router
 from .routes.places import place_router
 from .routes.schools import school_router
@@ -18,6 +19,7 @@ app = FastAPI(root_path=str(config.api_base_path))
 
 app.include_router(graphql_app, prefix="/graphql", tags=["GraphQL"])
 
+app.include_router(campus_router, prefix="/courses", tags=["Courses"])
 app.include_router(campus_router, prefix="/campuses", tags=["Campuses"])
 app.include_router(event_router, prefix="/events", tags=["Events"])
 app.include_router(place_router, prefix="/places", tags=["Places"])
