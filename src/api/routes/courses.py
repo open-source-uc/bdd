@@ -1,6 +1,7 @@
 from typing import Union
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, col
+import re
 
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
@@ -11,6 +12,9 @@ from ...db import Course, Subject
 from ..utils import get_db
 
 course_router = APIRouter()
+
+NUMBERS_EXP = re.compile(r"^\d{1,4}$")
+SUBJECT_CODE_EXP = re.compile(r"^[a-zA-Z]{1,3}(\d{3,4}[a-zA-Z]?|\d{0,4})$")
 
 
 @course_router.get("/", response_model=Page[Course])
@@ -30,9 +34,17 @@ def get_courses(
     allow_schedule_collisions: Union[bool, None] = None,
 ):
     query = select(Course).join(Subject).where(Course.subject_id == Subject.id)
-    # Filter query (numeric, initials, name or teacher)
     if q is not None:
-        pass
+        if NUMBERS_EXP.match(query):
+            query = query.where(Course.nrc == q)
+
+        elif SUBJECT_CODE_EXP.match(query):
+            query = query.where(col(Subject.code).startswith(q))  # TODO: case-insensitive
+
+        else:
+            query = query.where(
+                col(Subject.name).contains(q)
+            )  # TODO: match teachers (or), case-insensitive, unaccent
 
     if term_id is not None:
         query = query.join(Term).where(Course.term_id == Term.id, Term.id == term_id)
@@ -54,16 +66,17 @@ def get_courses(
 
     if formats is not None:
         query = query.where(col(Course.format).in_(formats))
-    # Filter with requirements
+
     if without_req is True:
-        pass
-    # Filter schedule
+        query = query.where(Subject.prerequisites_raw != "No tiene")
+
     if schedule is not None:
+        # TODO: filter by schedule
         if allow_schedule_collisions is True:
             pass
-    # Filter no quota
+
     if with_quota is True:
-        pass
+        query = query.where(Course.available_quota != 0)
 
     return paginate(db, query)
 
