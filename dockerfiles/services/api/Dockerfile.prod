@@ -1,0 +1,23 @@
+FROM python:3.10-slim AS gen-requirements
+WORKDIR /workspace
+
+# Base steps that doesn't require external files
+RUN pip install "poetry>=1,<2"
+RUN python -m venv .venv
+
+# Generate requirements.txt
+COPY pyproject.toml poetry.lock ./
+RUN poetry export -f requirements.txt -o requirements.txt --without-hashes
+
+FROM python:3.10-slim AS server
+WORKDIR /workspace
+RUN apt-get update
+RUN apt-get -y install libpq-dev gcc g++
+
+# Install requirements
+COPY --from=gen-requirements /workspace/requirements.txt ./
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+
+# Aditional files
+COPY readme.md ./
+COPY src/ src/

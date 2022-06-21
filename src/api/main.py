@@ -1,9 +1,8 @@
-from dotenv import load_dotenv
 from fastapi import FastAPI
 
-load_dotenv()
-
 from ..db import create_db
+from ..config import config
+
 from .graphql import graphql_app
 from .routes.campus import campus_router
 from .routes.events import event_router
@@ -14,7 +13,8 @@ from .routes.subject import subject_router
 from .routes.teachers import teacher_router
 from .routes.terms import terms_router
 
-app = FastAPI()
+
+app = FastAPI(root_path=str(config.api_base_path))
 
 app.include_router(graphql_app, prefix="/graphql", tags=["GraphQL"])
 

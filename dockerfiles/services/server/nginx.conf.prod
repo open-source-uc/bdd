@@ -1,0 +1,5 @@
+# Docs static files
+location /docs/ {
+    alias /var/www/;
+    index index.html;
+}

@@ -1,0 +1,26 @@
+{
+	"name": "BDDUC DevContainer",
+	"dockerComposeFile": [
+		"../docker-compose.yml",
+		"../dockerfiles/docker-compose.dev.yml",
+		"docker-compose.yml",
+	],
+	"service": "api",
+	"workspaceFolder": "/workspace",
+	"settings": {
+		"files.associations": {
+			"Dockerfile.dev": "dockerfile",
+			"Dockerfile.prod": "dockerfile",
+			"nginx.conf.prod": "nginx",
+			"nginx.conf.dev": "nginx",
+        }
+	},
+	"extensions": [
+		"ms-python.python",
+		"ahmadalli.vscode-nginx-conf",
+		"EditorConfig.EditorConfig",
+		"aaron-bond.better-comments",
+		"ms-python.isort",
+	],
+	"postAttachCommand": ["echo", "run the server with\nuvicorn --reload src.api:app --host 0.0.0.0\n"]
+}
