@@ -1,47 +1,37 @@
 import enum
-from datetime import date, datetime
 from typing import List, Optional
 
-from sqlalchemy import Column, Index, sql
-from sqlalchemy.sql.expression import true
+from sqlalchemy import Column
+from .term import Term
+from .places import Campus
+
 # sqlalchemy debería ser evitado, pero la API de sqlmodel no es tan completa aún
 from sqlalchemy.sql.sqltypes import Enum as SQLEnum
 from sqlmodel import Field, Relationship, SQLModel
-
-# NOTE(benjavicente): para las ubicaciones se podria usar postgis,
-#                     pero no hay un buen ORM para añadirlo a este esquema
-
-# from geoalchemy2 import Geometry
 
 
 # JoinTables tienen que estar antes de los modelos que unen
 
 
 class SubjectEquivalencies(SQLModel, table=True):
-    # __tablename__ = "subject_equivalencies"  # type: ignore
-    subject_id: Optional[int] = Field(default=None, foreign_key="subject.id", primary_key=True)
-    equivalence_id: Optional[int] = Field(default=None, foreign_key="subject.id", primary_key=True)
+    subject_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
+    equivalence_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
+
+
+class SubjectPrerequisites(SQLModel, table=True):
+    subject_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
+    prerequisite_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
 
 
 class CoursesTeachers(SQLModel, table=True):
-    course_id: Optional[int] = Field(default=None, foreign_key="course.id", primary_key=True)
-    teacher_id: Optional[int] = Field(default=None, foreign_key="teacher.id", primary_key=True)
-
-
-class RequirementRelationEnum(str, enum.Enum):
-    AND = "and"
-    OR = "or"
-
-    @classmethod
-    def from_catalogo(cls, value: str):
-        if value == "y": return cls(cls.AND)
-        if value == "o": return cls(cls.OR)
+    course_id: int = Field(default=None, foreign_key="course.id", primary_key=True)
+    teacher_id: int = Field(default=None, foreign_key="teacher.id", primary_key=True)
 
 
 class Subject(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    credits: Optional[int] = None
+    credits: int
     code: str
     courses: List["Course"] = Relationship(back_populates="subject")
     school_id: Optional[int] = Field(default=None, foreign_key="school.id")
@@ -51,13 +41,33 @@ class Subject(SQLModel, table=True):
     description: Optional[str] = None
     restrictions: Optional[str] = None
     prerequisites_raw: Optional[str] = None
-    requirements_relation: Optional[RequirementRelationEnum] = Field(
-        default=None,
-        sa_column=Column(SQLEnum(RequirementRelationEnum)),
+    need_all_requirements: bool = False  # Requirements relation
+
+    prerequisites: List["Subject"] = Relationship(
+        back_populates="unlocks",
+        link_model=SubjectPrerequisites,
+        sa_relationship_kwargs={
+            "primaryjoin": "Subject.id==SubjectPrerequisites.subject_id",
+            "secondaryjoin": "Subject.id==SubjectPrerequisites.prerequisite_id",
+        },
     )
-    prerequisites: List["PrerequisitesOrGroupElement"] = Relationship(
-        back_populates="subjects",
+    unlocks: List["Subject"] = Relationship(
+        back_populates="prerequisites",
+        link_model=SubjectPrerequisites,
+        sa_relationship_kwargs={
+            "primaryjoin": "Subject.id==SubjectPrerequisites.prerequisite_id",
+            "secondaryjoin": "Subject.id==SubjectPrerequisites.subject_id",
+        },
     )
+
+    equivalences: List["Subject"] = Relationship(
+        link_model=SubjectEquivalencies,
+        sa_relationship_kwargs={
+            "primaryjoin": "Subject.id==SubjectEquivalencies.subject_id",
+            "secondaryjoin": "Subject.id==SubjectEquivalencies.equivalence_id",
+        },
+    )
+
     # __table_args__ = (
     #     Index(
     #         "subject_syllabus_full_text_search_index",
@@ -66,91 +76,8 @@ class Subject(SQLModel, table=True):
     #     ),
     # )
 
-    # TODO
-    # equivalences: List["Subject"] = Relationship(
-    #     back_populates="equivalences",
-    #     link_model=SubjectEquivalencies,
-    # )
-
     def __repr__(self) -> str:
         return f"<{type(self).__name__} code={repr(self.code)}>"
-
-    # NOTE(benjavicente): pydantic no soporta getters y setters
-    def get_prerequisites(self) -> List[List["Subject"]]:
-        return [[g.subject for g in g_or.child_and_groups] for g_or in self.prerequisites]
-
-    def set_prerequisites(self, value: List[List["Subject"]]):
-        group: List["PrerequisitesOrGroupElement"] = []
-        for and_group in value:
-            or_group_container = PrerequisitesOrGroupElement()
-            for subject in and_group:
-                subject_relation = PrerequisitesAndGroupElement(subject=subject)
-                or_group_container.child_and_groups.append(subject_relation)
-            group.append(or_group_container)
-        self.prerequisites = group
-
-
-class PrerequisitesOrGroupElement(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
-    subject: Subject = Relationship(back_populates="prerequisites")
-    child_and_groups: List["PrerequisitesAndGroupElement"] = Relationship(
-        sa_relationship_kwargs=dict(lazy="joined")
-    )
-    subjects: List["Subject"] = Relationship()
-
-    def __repr__(self) -> str:
-        return f"<{type(self).__name__} [{[g.subject for g in self.child_and_groups]}]>"
-
-
-class PrerequisitesAndGroupElement(SQLModel, table=True):
-    prerequisites_or_group_element_id: Optional[int] = Field(
-        default=None,
-        foreign_key="PrerequisitesOrGroupElement.id".lower(),
-        primary_key=True,
-    )
-    prerequisites_or_group_element: PrerequisitesOrGroupElement = Relationship()
-    subject_id: Optional[int] = Field(
-        default=None,
-        foreign_key="subject.id",
-        primary_key=True,
-    )
-    subject: "Subject" = Relationship()
-
-
-class RestrictionsOrGroup(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    subject_id: int = Field(foreign_key="subject.id")
-
-
-class RestrictionsAndGroup(SQLModel, table=True):
-    restrictions_or_group_id: int = Field(foreign_key="restrictionsorgroup.id", primary_key=True)
-    restriction: str
-
-
-class PeriodEnum(str, enum.Enum):
-    s1 = "S1"
-    s2 = "S2"
-    tav = "TAV"
-
-    # NOTA(benjavicente): No se como se puede hacer esto más simple
-
-    def __int__(self):
-        # Convierte las siglas a numeros al hacer int(periodo)
-        return ["S1", "S2", "TAV"].index(self.value) + 1
-
-    @classmethod
-    def from_int(cls, value: int):
-        return cls(["S1", "S2", "TAV"][value - 1])
-
-
-class Term(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    year: int
-    period: PeriodEnum = Field(sa_column=Column(SQLEnum(PeriodEnum)))
-    first_class_day: Optional[date] = None
-    last_class_day: Optional[date] = None
-    last_day: Optional[date] = None
 
 
 class Course(SQLModel, table=True):
@@ -169,17 +96,11 @@ class Course(SQLModel, table=True):
     fg_area: Optional[str]
     is_removable: Optional[bool]
     is_english: Optional[bool]
-    schedule: List["ClassSchedule"] = Relationship(back_populates="course")
     need_special_aproval: Optional[bool]
+    schedule: List["ClassSchedule"] = Relationship(back_populates="course")
     available_quota: Optional[int]
     total_quota: Optional[int]
     teachers: List["Teacher"] = Relationship(back_populates="courses", link_model=CoursesTeachers)
-
-
-class Campus(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    places: List["Place"] = Relationship()
 
 
 class DayEnum(str, enum.Enum):
@@ -216,47 +137,3 @@ class School(SQLModel, table=True):
     website: Optional[str] = None
     description: Optional[str] = None
     subjects: List[Subject] = Relationship(back_populates="school")
-
-
-class CategoryOfPlace(SQLModel, table=True):
-    category_id: Optional[int] = Field(
-        default=None, foreign_key="placecategory.id", primary_key=True
-    )
-    place_id: Optional[int] = Field(default=None, foreign_key="place.id", primary_key=True)
-
-
-class Place(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    lat: float
-    lng: float
-    # latLng: list = Field(sa_column=Column(Geometry("POINT")))
-    # polygon: Optional[list] = Field(default=None, sa_column=Column(Geometry("POLYGON")))
-    campus_id: Optional[int] = Field(default=None, foreign_key="campus.id")
-    campus: Campus = Relationship(back_populates="places")
-    name: str
-    floor: Optional[int] = None
-    notes: Optional[str] = None
-    description: Optional[str] = None
-    categories: List["PlaceCategory"] = Relationship(
-        back_populates="places",
-        link_model=CategoryOfPlace,
-    )
-    parent_id: Optional[int] = Field(default=None, foreign_key="place.id")
-    parent: "Place" = Relationship(back_populates="child")
-    child: "Place" = Relationship()
-
-
-class PlaceCategory(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    places: list[Place] = Relationship(back_populates="categories", link_model=CategoryOfPlace)
-
-
-class UniversityEvents(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    start: datetime
-    end: datetime
-    tag: str
-    description: Optional[str]
-    is_a_holiday: bool = False
