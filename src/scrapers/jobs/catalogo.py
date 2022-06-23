@@ -1,9 +1,9 @@
-from string import ascii_uppercase
 from sqlmodel import Session, select
-from scripts.fullscrapers.code_iterator import CodeIterator
-from src.db import School, Subject
-from src.db.schema import RequirementRelationEnum
-from src.scrapers import get_subjects, get_description, request
+from .code_iterator import CodeIterator
+from ...db import School, Subject
+from ..catalogo import get_subjects, get_additional_info, get_syllabus
+from ..description import get_description
+from .. import request
 from . import log
 
 
@@ -15,12 +15,14 @@ errors: set[str] = set()
 MAX_CATALOGO = 1000
 
 
-async def search_catalogo_code(base_code: str, db_session: Session, catalogo_session) -> int:
+async def _search_catalogo_code(base_code: str, db_session: Session, catalogo_session) -> int:
     "Search code in Catalogo and save subjects to DB"
     log.info("Searching %s in Catalogo", base_code)
 
     try:
-        subjects = await get_subjects(base_code, session=catalogo_session)
+        subjects = await get_subjects(
+            base_code, session=catalogo_session, all_subjects=True, all_info=False
+        )
         for s in subjects:
             if s["code"] in subjects_cache:
                 continue
@@ -37,13 +39,9 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                 subject.name = s["name"]
                 subject.code = s["code"]
                 subject.credits = s["credits"]
-                subject.requirements_relation = RequirementRelationEnum.from_catalogo(
-                    s["relationship"]
-                )
-                subject.restrictions = ",".join(["=".join(r) for r in s["restrictions"]])
-                subject.syllabus = s["syllabus"]
                 subject.academic_level = s["level"]
-                subject.description = get_description(s["syllabus"])
+                subject.description = s["description"]
+                subject.is_active = s["is_active"]
 
                 # Check school (use cache)
                 school_id = schools_cache.get(s["school_name"])
@@ -90,12 +88,50 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
         return 0
 
 
+async def _search_additional_info(code: str, db_session: Session, catalogo_session) -> None:
+    "Search code requirements and syllabus in Catalogo and save to DB"
+    log.info("Searching %s in Catalogo", code)
+
+    try:
+        data = await get_additional_info(code, catalogo_session)
+        syllabus = await get_syllabus(code, catalogo_session)
+
+        subject: Subject = db_session.exec(
+            select(Subject).where(Subject.code == code)
+        ).one_or_none()
+        if not subject:
+            errors.add(code)
+            log.error("Discovered %s not found in DB", code)
+            return
+
+        subject.syllabus = syllabus
+        if subject.description is None:
+            subject.description = get_description(syllabus)
+
+        subject.need_all_requirements = data["relationship"]
+        subject.restrictions = ",".join(["=".join(r) for r in data["restrictions"]])
+        subject.prerequisites_raw = data["prerequisites_raw"]
+        # TODO: equivalencies and prerequistes many-to-many
+
+        try:
+            db_session.add(subject)
+            db_session.commit()
+        except Exception:
+            log.error("Cannot save %s", code, exc_info=True)
+            errors.add(code)
+            db_session.rollback()
+    
+    except Exception:
+        log.error("Cannot get requirements and syllabus for %s", code, exc_info=True)
+        errors.add(code)
+
+
 async def get_full_catalogo(db_session: Session) -> None:
     # Search all
     async with request.catalogo() as catalogo_session:
         code_generator = CodeIterator()
         for code in code_generator:
-            if await search_catalogo_code(code, db_session, catalogo_session) >= MAX_CATALOGO:
+            if await _search_catalogo_code(code, db_session, catalogo_session) >= MAX_CATALOGO:
                 code_generator.add_depth()
 
     # Retry errors with new session
@@ -103,7 +139,23 @@ async def get_full_catalogo(db_session: Session) -> None:
         initial_errors: set[str] = errors.copy()
         errors.clear()
         for code in initial_errors:
-            await search_catalogo_code(code, db_session, catalogo_session)
+            await _search_catalogo_code(code, db_session, catalogo_session)
 
     if len(errors) != 0:
-        log.error("Errors %s", ", ".join(errors))
+        log.error("Discover errors %s", ", ".join(errors))
+        errors.clear()
+
+    # Get requirements and syllabus for discovered subjects
+    async with request.catalogo() as catalogo_session:
+        for code in subjects_cache:
+            _search_additional_info(code, db_session, catalogo_session)
+
+    # Retry errors with new session
+    async with request.catalogo() as catalogo_session:
+        initial_errors: set[str] = errors.copy()
+        errors.clear()
+        for code in initial_errors:
+            await _search_additional_info(code, db_session, catalogo_session)
+    
+    if len(errors) != 0:
+        log.error("Requirements and syllabus errors %s", ", ".join(errors))
