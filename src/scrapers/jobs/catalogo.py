@@ -15,7 +15,7 @@ errors: set[str] = set()
 MAX_CATALOGO = 1000
 
 
-async def _search_catalogo_code(base_code: str, db_session: Session, catalogo_session) -> int:
+async def search_catalogo_code(base_code: str, db_session: Session, catalogo_session) -> int:
     "Search code in Catalogo and save subjects to DB"
     log.info("Searching %s in Catalogo", base_code)
 
@@ -88,7 +88,7 @@ async def _search_catalogo_code(base_code: str, db_session: Session, catalogo_se
         return 0
 
 
-async def _search_additional_info(code: str, db_session: Session, catalogo_session) -> None:
+async def search_additional_info(code: str, db_session: Session, catalogo_session) -> None:
     "Search code requirements and syllabus in Catalogo and save to DB"
     log.info("Searching %s in Catalogo", code)
 
@@ -131,7 +131,7 @@ async def get_full_catalogo(db_session: Session) -> None:
     async with request.catalogo() as catalogo_session:
         code_generator = CodeIterator()
         for code in code_generator:
-            if await _search_catalogo_code(code, db_session, catalogo_session) >= MAX_CATALOGO:
+            if await search_catalogo_code(code, db_session, catalogo_session) >= MAX_CATALOGO:
                 code_generator.add_depth()
 
     # Retry errors with new session
@@ -139,7 +139,7 @@ async def get_full_catalogo(db_session: Session) -> None:
         initial_errors: set[str] = errors.copy()
         errors.clear()
         for code in initial_errors:
-            await _search_catalogo_code(code, db_session, catalogo_session)
+            await search_catalogo_code(code, db_session, catalogo_session)
 
     if len(errors) != 0:
         log.error("Discover errors %s", ", ".join(errors))
@@ -148,14 +148,14 @@ async def get_full_catalogo(db_session: Session) -> None:
     # Get requirements and syllabus for discovered subjects
     async with request.catalogo() as catalogo_session:
         for code in subjects_cache:
-            _search_additional_info(code, db_session, catalogo_session)
+            search_additional_info(code, db_session, catalogo_session)
 
     # Retry errors with new session
     async with request.catalogo() as catalogo_session:
         initial_errors: set[str] = errors.copy()
         errors.clear()
         for code in initial_errors:
-            await _search_additional_info(code, db_session, catalogo_session)
+            await search_additional_info(code, db_session, catalogo_session)
     
     if len(errors) != 0:
         log.error("Requirements and syllabus errors %s", ", ".join(errors))
