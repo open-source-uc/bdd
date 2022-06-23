@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
-from scripts.fullscrapers.code_iterator import CodeIterator
-from src.db import (
+from .code_iterator import CodeIterator
+from ...db import (
     Campus,
     ClassSchedule,
     Course,
@@ -10,8 +10,9 @@ from src.db import (
     Teacher,
     Term,
 )
-from src.scrapers import get_courses, request
-from .catalogo import search_catalogo_code
+from ..buscacursos import get_courses
+from .. import request
+from .catalogo import search_additional_info, search_catalogo_code
 from . import log
 
 MAX_BC = 50
@@ -58,6 +59,7 @@ async def search_bc_code(
                     if not subject:
                         async with request.catalogo() as catalogo_session:
                             await search_catalogo_code(c["code"], db_session, catalogo_session)
+                            await search_additional_info(c["code"], db_session, catalogo_session)
                         subject = db_session.exec(subject_query).one_or_none()
                     subject_id = subject.id
                     subject_cache[c["code"]] = subject_id
