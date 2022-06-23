@@ -1,3 +1,4 @@
+from datetime import date
 import enum
 from typing import List, Optional
 
@@ -30,6 +31,7 @@ class CoursesTeachers(SQLModel, table=True):
 
 class Subject(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    updated_at: Optional[date] = None
     name: str
     credits: int
     code: str
@@ -42,6 +44,7 @@ class Subject(SQLModel, table=True):
     restrictions: Optional[str] = None
     prerequisites_raw: Optional[str] = None
     need_all_requirements: bool = False  # Requirements relation
+    is_active: Optional[bool] = None
 
     prerequisites: List["Subject"] = Relationship(
         back_populates="unlocks",
@@ -82,6 +85,7 @@ class Subject(SQLModel, table=True):
 
 class Course(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    updated_at: Optional[date] = None
     subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
     subject: Subject = Relationship(back_populates="courses")
     term_id: Optional[int] = Field(default=None, foreign_key="term.id")
