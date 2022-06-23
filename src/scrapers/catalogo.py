@@ -23,8 +23,7 @@ from typing import TYPE_CHECKING, Optional, cast
 
 import bs4
 
-from .utils import (clean_text, gather_routines, run_parse_strategy,
-                    tag_to_int_value)
+from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
 
 if TYPE_CHECKING:
     from .types import ScrappedSubject
@@ -93,14 +92,14 @@ def parse_requirements(requirements_text: str):
     return requirements
 
 
-def parse_equivalences(equivalences_text: str):
-    if equivalences_text == "No tiene":
+def parse_equivalencies(equivalencies_text: str):
+    if equivalencies_text == "No tiene":
         return []
-    return [e.strip() for e in equivalences_text[1:-2].split("o")]
+    return [e.strip() for e in equivalencies_text[1:-2].split("o")]
 
 
 def parse_relationship(relationship_text: str):
-    return relationship_text if relationship_text != "No tiene" else None
+    return relationship_text != "y"
 
 
 RESTRICTIONS_RE = re.compile(r"\(\s*([^\(]*?)\s*=\s*([^\)]*?)\s*\)")
@@ -122,11 +121,12 @@ async def get_additional_info(code: str, *, session: "Session"):
     # TODO: limpiar esto
     requirements_text = find_text_by_table_key(soup, "Prerrequisitos")
     if requirements_text:
+        data["prerequisites_raw"] = requirements_text
         data["requirements"] = parse_requirements(requirements_text)
 
-    equivalences_text = find_text_by_table_key(soup, "Equivalencias")
-    if equivalences_text:
-        data["equivalences"] = parse_equivalences(equivalences_text)
+    equivalencies_text = find_text_by_table_key(soup, "Equivalencias")
+    if equivalencies_text:
+        data["equivalencies"] = parse_equivalencies(equivalencies_text)
 
     relationship_text = find_text_by_table_key(soup, "Relación")
     if relationship_text:
@@ -153,21 +153,23 @@ async def get_syllabus(code: str, *, session: "Session"):
     return {}
 
 
-async def parse_row(row: "bs4.element.Tag", session: "Session"):
+async def parse_row(row: "bs4.element.Tag", session: "Session", all_info: bool):
     data = run_parse_strategy(COLUMNS_STRATEGIES, row.findChildren("td", recursive=False))
     code = data.get("code")
-    if code is not None:
+    if all_info and code is not None:
         data |= await get_additional_info(code, session=session)
         data |= await get_syllabus(code, session=session)
     return data
 
 
 async def get_subjects(
-    code: str, *, session: "Session", all_subjects: bool = True
+    code: str, *, session: "Session", all_subjects: bool = True, all_info: bool = True
 ) -> "list[ScrappedSubject]":
     "Obtiene los ramos por su sigla"
     params = BASE_SUBJECT_PARAMS | {"sigla": code, "vigencia": 2 * int(all_subjects)}
     async with session.post("/index.php", params=params) as response:
         body = await response.read()
     soup = bs4.BeautifulSoup(body, "lxml")
-    return await gather_routines([parse_row(row, session) for row in soup.select("tbody > tr")])
+    return await gather_routines(
+        [parse_row(row, session, all_info) for row in soup.select("tbody > tr")]
+    )
