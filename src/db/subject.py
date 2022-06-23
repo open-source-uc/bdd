@@ -43,6 +43,7 @@ class Subject(SQLModel, table=True):
     description: Optional[str] = None
     restrictions: Optional[str] = None
     prerequisites_raw: Optional[str] = None
+    equivalencies_raw: Optional[str] = None
     need_all_requirements: bool = False  # Requirements relation
     is_active: Optional[bool] = None
 
@@ -63,7 +64,7 @@ class Subject(SQLModel, table=True):
         },
     )
 
-    equivalences: List["Subject"] = Relationship(
+    equivalencies: List["Subject"] = Relationship(
         link_model=SubjectEquivalencies,
         sa_relationship_kwargs={
             "primaryjoin": "Subject.id==SubjectEquivalencies.subject_id",
