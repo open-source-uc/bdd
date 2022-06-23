@@ -31,7 +31,6 @@ class CoursesTeachers(SQLModel, table=True):
 
 class Subject(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    updated_at: Optional[date] = None
     name: str
     credits: int
     code: str
@@ -86,7 +85,6 @@ class Subject(SQLModel, table=True):
 
 class Course(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    updated_at: Optional[date] = None
     subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
     subject: Subject = Relationship(back_populates="courses")
     term_id: Optional[int] = Field(default=None, foreign_key="term.id")
