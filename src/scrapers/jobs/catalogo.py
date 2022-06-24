@@ -93,8 +93,8 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
     log.info("Searching %s in Catalogo", code)
 
     try:
-        data = await get_additional_info(code, catalogo_session)
-        syllabus = await get_syllabus(code, catalogo_session)
+        data = await get_additional_info(code, session=catalogo_session)
+        syllabus = await get_syllabus(code, session=catalogo_session)
 
         subject: Subject = db_session.exec(
             select(Subject).where(Subject.code == code)
