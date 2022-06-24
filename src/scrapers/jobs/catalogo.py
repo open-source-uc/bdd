@@ -94,7 +94,7 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
 
     try:
         data = await get_additional_info(code, session=catalogo_session)
-        syllabus = await get_syllabus(code, session=catalogo_session)
+        syllabus = await get_syllabus(code, session=catalogo_session).get("syllabus")
 
         subject: Subject = db_session.exec(
             select(Subject).where(Subject.code == code)
