@@ -37,7 +37,7 @@ def get_courses(
             query = query.where(Course.nrc == q)
 
         elif SUBJECT_CODE_EXP.match(query):
-            query = query.where(col(Subject.code).startswith(q))  # TODO: case-insensitive
+            query = query.where(col(Subject.code).startswith(q.upper()))
 
         else:
             query = query.where(
