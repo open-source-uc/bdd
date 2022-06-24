@@ -148,7 +148,7 @@ async def get_full_catalogo(db_session: Session) -> None:
     # Get requirements and syllabus for discovered subjects
     async with request.catalogo() as catalogo_session:
         for code in subjects_cache:
-            search_additional_info(code, db_session, catalogo_session)
+            await search_additional_info(code, db_session, catalogo_session)
 
     # Retry errors with new session
     async with request.catalogo() as catalogo_session:
