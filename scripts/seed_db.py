@@ -9,12 +9,12 @@ import asyncio
 from time import time
 from sqlmodel import Session
 from src.db import engine, create_db
-from fullscrapers import buscacursos, catalogo, initialize_log
+from src.scrapers.jobs import buscacursos, catalogo, initialize_log
 
 
 # Start script
 initialize_log()
-create_db()
+create_db(clean=False)  # clean resetea la BD
 
 with Session(engine) as session:
     init_time = time()
