@@ -6,9 +6,7 @@ import re
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
 
-from src.db.schema import Term
-
-from ...db import Course, Subject
+from ...db import Course, Subject, Term
 from ..utils import get_db
 
 course_router = APIRouter()
