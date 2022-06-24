@@ -40,7 +40,7 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                 subject.code = s["code"]
                 subject.credits = s["credits"]
                 subject.academic_level = s["level"]
-                subject.description = s["description"]
+                subject.description = s.get("description")
                 subject.is_active = s["is_active"]
 
                 # Check school (use cache)
