@@ -38,7 +38,7 @@ class CoursesTeachers(SQLModel, table=True):
 
 
 class Subject(SQLModel, table=True):
-    """Catalogo UC subject"""
+    """Subject from Catalogo UC"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
@@ -95,7 +95,7 @@ class Subject(SQLModel, table=True):
 
 class Course(SQLModel, table=True):
     """Instance of a Subject dictated in a Term and specific section.
-    Represents a Buscacursos UC course."""
+    Represents a course from Buscacursos."""
 
     id: Optional[int] = Field(default=None, primary_key=True)
     subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
