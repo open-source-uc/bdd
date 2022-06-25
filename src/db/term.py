@@ -26,6 +26,7 @@ class PeriodEnum(str, enum.Enum):
 
 
 class Term(SQLModel, table=True):
+    """Academic semester of a year"""
     id: Optional[int] = Field(default=None, primary_key=True)
     year: int
     period: PeriodEnum = Field(sa_column=Column(SQLEnum(PeriodEnum)))

@@ -15,21 +15,31 @@ from sqlmodel import Field, Relationship, SQLModel
 
 
 class SubjectEquivalencies(SQLModel, table=True):
+    """Join model for equivalent subjects"""
+
     subject_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
     equivalence_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
 
 
 class SubjectPrerequisites(SQLModel, table=True):
+    """Join model for subject prerequisites, organized by groups.
+    All of the prerequsites of at least one group should be met to satisfy the requirements"""
+
     subject_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
     prerequisite_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
+    gruop: int = Field(default=None, primary_key=True)
 
 
 class CoursesTeachers(SQLModel, table=True):
+    """Join model for courses teachers"""
+
     course_id: int = Field(default=None, foreign_key="course.id", primary_key=True)
     teacher_id: int = Field(default=None, foreign_key="teacher.id", primary_key=True)
 
 
 class Subject(SQLModel, table=True):
+    """Catalogo UC subject"""
+
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     credits: int
@@ -84,6 +94,9 @@ class Subject(SQLModel, table=True):
 
 
 class Course(SQLModel, table=True):
+    """Instance of a Subject dictated in a Term and specific section.
+    Represents a Buscacursos UC course."""
+
     id: Optional[int] = Field(default=None, primary_key=True)
     subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
     subject: Subject = Relationship(back_populates="courses")
@@ -107,6 +120,8 @@ class Course(SQLModel, table=True):
 
 
 class DayEnum(str, enum.Enum):
+    """Monday to Saturday days"""
+
     L = "L"
     M = "M"
     W = "W"
@@ -116,6 +131,8 @@ class DayEnum(str, enum.Enum):
 
 
 class ClassSchedule(SQLModel, table=True):
+    """Module of a course in a week"""
+
     id: Optional[int] = Field(default=None, primary_key=True)
     day: DayEnum = Field(sa_column=Column(SQLEnum(DayEnum)))
     module: int = Field(ge=1, le=8)  # [1, 2, 3, 4, 5, 6, 7, 8]
