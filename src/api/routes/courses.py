@@ -1,5 +1,5 @@
 from typing import Union
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select, col
 import re
 
@@ -18,18 +18,24 @@ SUBJECT_CODE_EXP = re.compile(r"^[a-zA-Z]{1,3}(\d{3,4}[a-zA-Z]?|\d{0,4})$")
 @course_router.get("/", response_model=Page[Course])
 def get_courses(
     db: Session = Depends(get_db),
-    q: Union[str, None] = None,
+    q: Union[str, None] = Query(
+        None, description="Query term: NRC, partial subject code or name, teacher name"
+    ),
     term_id: Union[int, None] = None,
     credits: Union[int, None] = None,
-    campus_ids: Union[list[int], None] = None,
-    school_ids: Union[list[int], None] = None,
-    fg_areas: Union[list[str], None] = None,
-    categories: Union[list[str], None] = None,
-    formats: Union[list[str], None] = None,
-    without_req: Union[bool, None] = None,
-    with_quota: Union[bool, None] = None,
-    schedule: Union[list[str], None] = None,
-    allow_schedule_collisions: Union[bool, None] = None,
+    campus_ids: list[int] = Query([]),
+    school_ids: list[int] = Query([]),
+    fg_areas: list[str] = Query([]),
+    categories: list[str] = Query([]),
+    formats: list[str] = Query([]),
+    without_req: bool = Query(False, description="Discard courses with prerequisites"),
+    with_quota: bool = Query(False, description="Discard courses without available quota"),
+    blocked_schedule: list[str] = Query(
+        [], description="Discard courses colliding with this modules"
+    ),
+    allow_ayu_and_lab_collisions: bool = Query(
+        False, description="Ignore schedule collisions with AYU and LAB modules"
+    ),
 ):
     query = select(Course).join(Subject).where(Course.subject_id == Subject.id)
     if q is not None:
@@ -50,31 +56,31 @@ def get_courses(
     if credits is not None:
         query = query.where(Subject.credits == credits)
 
-    if campus_ids is not None:
+    if len(campus_ids) != 0:
         query = query.where(col(Course.campus_id).in_(campus_ids))
 
-    if school_ids is not None:
+    if len(school_ids) != 0:
         query = query.where(col(Subject.school_id).in_(school_ids))
 
-    if fg_areas is not None:
+    if len(fg_areas) != 0:
         query = query.where(col(Course.fg_area).in_(fg_areas))
 
-    if categories is not None:
+    if len(categories) != 0:
         query = query.where(col(Course.category).in_(categories))
 
-    if formats is not None:
+    if len(formats) != 0:
         query = query.where(col(Course.format).in_(formats))
 
-    if without_req is True:
+    if without_req:
         query = query.where(Subject.prerequisites_raw != "No tiene")
 
-    if schedule is not None:
-        # TODO: filter by schedule
-        if allow_schedule_collisions is True:
-            pass
-
-    if with_quota is True:
+    if with_quota:
         query = query.where(Course.available_quota != 0)
+
+    if len(blocked_schedule) != 0:
+        # TODO: filter by schedule
+        if allow_ayu_and_lab_collisions:
+            pass
 
     return paginate(db, query)
 
