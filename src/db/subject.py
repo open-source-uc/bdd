@@ -15,10 +15,12 @@ from sqlmodel import Field, Relationship, SQLModel
 
 
 class SubjectEquivalencies(SQLModel, table=True):
-    """Join model for equivalent subjects"""
+    """Join model for equivalent subjects.
+    All of the equivalencies of at least one group should be met to satisfy the equivalency"""
 
     subject_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
     equivalence_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
+    group: int = Field(default=None, primary_key=True)
 
 
 class SubjectPrerequisites(SQLModel, table=True):
@@ -27,7 +29,7 @@ class SubjectPrerequisites(SQLModel, table=True):
 
     subject_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
     prerequisite_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
-    gruop: int = Field(default=None, primary_key=True)
+    group: int = Field(default=None, primary_key=True)
 
 
 class CoursesTeachers(SQLModel, table=True):
