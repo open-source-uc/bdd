@@ -83,9 +83,10 @@ def find_text_by_table_key(soup: "bs4.BeautifulSoup", key: "str"):
 
 
 def parse_requirements_groups(requirements_text: str):
-    # Los requisitos tienen forma ((A y B) o (A y C) o D(c))
+    # Los requisitos tienen forma "(A y B) o (A y C) o D(c)"
     requirements = []
     if requirements_text != "No tiene":
+        requirements_text = requirements_text.replace("(c)", "c")
         or_groups = requirements_text.split("o")
         for group in map(str.strip, or_groups):
             requirements.append([c.strip() for c in group.strip("()").split("y")])

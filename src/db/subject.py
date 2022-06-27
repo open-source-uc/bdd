@@ -30,6 +30,7 @@ class SubjectPrerequisites(SQLModel, table=True):
     subject_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
     prerequisite_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
     group: int = Field(default=None, primary_key=True)
+    is_corequisite: bool
 
 
 class CoursesTeachers(SQLModel, table=True):

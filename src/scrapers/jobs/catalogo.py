@@ -136,6 +136,11 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
             )
             for i, group in enumerate(data["requirements"]):
                 for req_code in group:
+                    is_corequisite = False
+                    if req_code[-1] == "c":
+                        is_corequisite = True
+                        req_code.strip("c")
+
                     req_subject_id: Subject = (
                         db_session.exec(select(Subject).where(Subject.code == req_code))
                         .one_or_none()
@@ -143,7 +148,10 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
                     )
                     db_session.add(
                         SubjectPrerequisites(
-                            subject_id=subject.id, prerequisite_id=req_subject_id, group=i
+                            subject_id=subject.id,
+                            prerequisite_id=req_subject_id,
+                            group=i,
+                            is_corequisite=is_corequisite,
                         )
                     )
 
