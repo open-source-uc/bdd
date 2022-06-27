@@ -82,20 +82,14 @@ def find_text_by_table_key(soup: "bs4.BeautifulSoup", key: "str"):
     return None
 
 
-def parse_requirements(requirements_text: str):
-    # Los requisitos tienen forma ((A y B) o (A y C))
+def parse_requirements_groups(requirements_text: str):
+    # Los requisitos tienen forma ((A y B) o (A y C) o D(c))
     requirements = []
     if requirements_text != "No tiene":
         or_groups = requirements_text.split("o")
         for group in map(str.strip, or_groups):
             requirements.append([c.strip() for c in group.strip("()").split("y")])
     return requirements
-
-
-def parse_equivalencies(equivalencies_text: str):
-    if equivalencies_text == "No tiene":
-        return []
-    return [e.strip() for e in equivalencies_text[1:-2].split("o")]
 
 
 def parse_relationship(relationship_text: str):
@@ -122,11 +116,11 @@ async def get_additional_info(code: str, *, session: "Session"):
     requirements_text = find_text_by_table_key(soup, "Prerrequisitos")
     if requirements_text:
         data["prerequisites_raw"] = requirements_text
-        data["requirements"] = parse_requirements(requirements_text)
+        data["requirements"] = parse_requirements_groups(requirements_text)
 
     equivalencies_text = find_text_by_table_key(soup, "Equivalencias")
     if equivalencies_text:
-        data["equivalencies"] = parse_equivalencies(equivalencies_text)
+        data["equivalencies"] = parse_requirements_groups(equivalencies_text)
 
     relationship_text = find_text_by_table_key(soup, "Relación")
     if relationship_text:
