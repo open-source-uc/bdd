@@ -12,7 +12,7 @@ class ScrappedSubject(TypedDict):
     syllabus: str
     requirements: list[list[str]]
     prerequisites_raw: str
-    equivalencies: list[str]
+    equivalencies: list[list[str]]
     equivalencies_raw: str
     relationship: str
     restrictions: list[tuple[str, str]]
