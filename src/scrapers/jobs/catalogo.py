@@ -1,6 +1,7 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, delete, select
+
 from .code_iterator import CodeIterator
-from ...db import School, Subject
+from ...db import School, Subject, SubjectPrerequisites, SubjectEquivalencies
 from ..catalogo import get_subjects, get_additional_info, get_syllabus
 from ..description import get_description
 from .. import request
@@ -111,16 +112,48 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
         subject.need_all_requirements = data["relationship"]
         subject.restrictions = ",".join(["=".join(r) for r in data["restrictions"]])
         subject.prerequisites_raw = data["prerequisites_raw"]
-        # TODO: equivalencies and prerequistes many-to-many
+        subject.equivalencies_raw = data["equivalencies_raw"]
 
         try:
+            # Set equivalencies
+            db_session.exec(
+                delete(SubjectEquivalencies).where(SubjectEquivalencies.subject_id == subject.id)
+            )
+            for i, group in enumerate(data["equivalencies"]):
+                for req_code in group:
+                    req_subject_id: Subject = (
+                        db_session.exec(select(Subject).where(Subject.code == req_code))
+                        .one_or_none()
+                        .id
+                    )
+                    db_session.add(
+                        SubjectEquivalencies(subject_id=subject.id, prerequisite_id=req_subject_id)
+                    )
+
+            # Set prerequisites
+            db_session.exec(
+                delete(SubjectPrerequisites).where(SubjectPrerequisites.subject_id == subject.id)
+            )
+            for i, group in enumerate(data["requirements"]):
+                for req_code in group:
+                    req_subject_id: Subject = (
+                        db_session.exec(select(Subject).where(Subject.code == req_code))
+                        .one_or_none()
+                        .id
+                    )
+                    db_session.add(
+                        SubjectPrerequisites(
+                            subject_id=subject.id, prerequisite_id=req_subject_id, group=i
+                        )
+                    )
+
             db_session.add(subject)
             db_session.commit()
         except Exception:
             log.error("Cannot save %s", code, exc_info=True)
             errors.add(code)
             db_session.rollback()
-    
+
     except Exception:
         log.error("Cannot get requirements and syllabus for %s", code, exc_info=True)
         errors.add(code)
@@ -156,6 +189,6 @@ async def get_full_catalogo(db_session: Session) -> None:
         errors.clear()
         for code in initial_errors:
             await search_additional_info(code, db_session, catalogo_session)
-    
+
     if len(errors) != 0:
         log.error("Requirements and syllabus errors %s", ", ".join(errors))
