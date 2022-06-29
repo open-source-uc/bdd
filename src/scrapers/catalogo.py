@@ -121,6 +121,7 @@ async def get_additional_info(code: str, *, session: "Session"):
 
     equivalencies_text = find_text_by_table_key(soup, "Equivalencias")
     if equivalencies_text:
+        data["equivalencies_raw"] = equivalencies_text
         data["equivalencies"] = parse_requirements_groups(equivalencies_text)
 
     relationship_text = find_text_by_table_key(soup, "Relación")
