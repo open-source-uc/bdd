@@ -109,51 +109,55 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
         if subject.description is None:
             subject.description = get_description(syllabus)
 
-        subject.need_all_requirements = data["relationship"]
-        subject.restrictions = ",".join(["=".join(r) for r in data["restrictions"]])
-        subject.prerequisites_raw = data["prerequisites_raw"]
-        subject.equivalencies_raw = data["equivalencies_raw"]
+        subject.need_all_requirements = data.get("relationship")
+        subject.restrictions = ",".join(["=".join(r) for r in data.get("restrictions", [])])
+        subject.prerequisites_raw = data.get("prerequisites_raw")
+        subject.equivalencies_raw = data.get("equivalencies_raw")
 
         try:
             # Set equivalencies
             db_session.exec(
                 delete(SubjectEquivalencies).where(SubjectEquivalencies.subject_id == subject.id)
             )
-            for i, group in enumerate(data["equivalencies"]):
-                for req_code in group:
-                    req_subject_id: Subject = (
-                        db_session.exec(select(Subject).where(Subject.code == req_code))
-                        .one_or_none()
-                        .id
-                    )
-                    db_session.add(
-                        SubjectEquivalencies(subject_id=subject.id, prerequisite_id=req_subject_id)
-                    )
+            if "equivalencies" in data:
+                for i, group in enumerate(data["equivalencies"]):
+                    for req_code in group:
+                        req_subject_id: Subject = (
+                            db_session.exec(select(Subject).where(Subject.code == req_code))
+                            .one_or_none()
+                            .id
+                        )
+                        db_session.add(
+                            SubjectEquivalencies(
+                                subject_id=subject.id, equivalence_id=req_subject_id, group=i
+                            )
+                        )
 
             # Set prerequisites
             db_session.exec(
                 delete(SubjectPrerequisites).where(SubjectPrerequisites.subject_id == subject.id)
             )
-            for i, group in enumerate(data["requirements"]):
-                for req_code in group:
-                    is_corequisite = False
-                    if req_code[-1] == "c":
-                        is_corequisite = True
-                        req_code.strip("c")
-
-                    req_subject_id: Subject = (
-                        db_session.exec(select(Subject).where(Subject.code == req_code))
-                        .one_or_none()
-                        .id
-                    )
-                    db_session.add(
-                        SubjectPrerequisites(
-                            subject_id=subject.id,
-                            prerequisite_id=req_subject_id,
-                            group=i,
-                            is_corequisite=is_corequisite,
+            if "requirements" in data:
+                for i, group in enumerate(data["requirements"]):
+                    for req_code in group:
+                        is_corequisite = False
+                        if req_code[-1] == "c":
+                            is_corequisite = True
+                            req_code = req_code.strip("c")
+                    
+                        req_subject_id: Subject = (
+                            db_session.exec(select(Subject).where(Subject.code == req_code))
+                            .one_or_none()
+                            .id
                         )
-                    )
+                        db_session.add(
+                            SubjectPrerequisites(
+                                subject_id=subject.id,
+                                prerequisite_id=req_subject_id,
+                                group=i,
+                                is_corequisite=is_corequisite,
+                            )
+                        )
 
             db_session.add(subject)
             db_session.commit()
@@ -169,6 +173,7 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
 
 async def get_full_catalogo(db_session: Session) -> None:
     # Search all
+    """
     async with request.catalogo() as catalogo_session:
         code_generator = CodeIterator()
         for code in code_generator:
@@ -185,10 +190,13 @@ async def get_full_catalogo(db_session: Session) -> None:
     if len(errors) != 0:
         log.error("Discover errors %s", ", ".join(errors))
         errors.clear()
+    """
 
+    codes = db_session.exec(select(Subject.code)).all()
+    print("LEN", len(codes))
     # Get requirements and syllabus for discovered subjects
     async with request.catalogo() as catalogo_session:
-        for code in subjects_cache:
+        for code in codes:
             await search_additional_info(code, db_session, catalogo_session)
 
     # Retry errors with new session

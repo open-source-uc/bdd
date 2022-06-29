@@ -94,7 +94,7 @@ def parse_requirements_groups(requirements_text: str):
 
 
 def parse_relationship(relationship_text: str):
-    return relationship_text != "y"
+    return relationship_text == "y"
 
 
 RESTRICTIONS_RE = re.compile(r"\(\s*([^\(]*?)\s*=\s*([^\)]*?)\s*\)")
