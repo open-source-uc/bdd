@@ -173,7 +173,6 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
 
 async def get_full_catalogo(db_session: Session) -> None:
     # Search all
-    """
     async with request.catalogo() as catalogo_session:
         code_generator = CodeIterator()
         for code in code_generator:
@@ -190,13 +189,10 @@ async def get_full_catalogo(db_session: Session) -> None:
     if len(errors) != 0:
         log.error("Discover errors %s", ", ".join(errors))
         errors.clear()
-    """
 
-    codes = db_session.exec(select(Subject.code)).all()
-    print("LEN", len(codes))
     # Get requirements and syllabus for discovered subjects
     async with request.catalogo() as catalogo_session:
-        for code in codes:
+        for code in subjects_cache:
             await search_additional_info(code, db_session, catalogo_session)
 
     # Retry errors with new session
