@@ -19,7 +19,9 @@ asyncio.run(main())
 
 import html
 import re
-from typing import TYPE_CHECKING, Optional, cast
+from sympy import Symbol, symbols
+from sympy.logic.boolalg import And, Or, to_dnf, simplify_logic
+from typing import TYPE_CHECKING, Callable, Optional, cast
 
 import bs4
 
@@ -82,14 +84,59 @@ def find_text_by_table_key(soup: "bs4.BeautifulSoup", key: "str"):
     return None
 
 
+def get_formula(elements_list: list[str], req_dict: dict[str, Symbol]):
+    relation_func: Callable = None
+    variables = []
+    while len(elements_list) != 0:
+        el = elements_list.pop(0)
+        if el == "":
+            continue
+        elif el == '(':
+            variables.append(get_formula(elements_list, req_dict))
+        elif el == ")":
+            if relation_func is not None:
+                return relation_func(*variables)
+            return variables[0]
+        elif el == "y":
+            relation_func = And
+        elif el == "o":
+            relation_func = Or
+        else:
+            variables.append(req_dict[el])
+
+    if relation_func is not None:
+        return relation_func(*variables)
+    return variables[0]
+
+
 def parse_requirements_groups(requirements_text: str):
     # Los requisitos tienen forma "(A y B) o (A y C) o D(c)"
     requirements = []
     if requirements_text != "No tiene":
-        requirements_text = requirements_text.replace("(c)", "c")
-        or_groups = requirements_text.split("o")
-        for group in map(str.strip, or_groups):
-            requirements.append([c.strip() for c in group.strip("()").split("y")])
+        # Convertir a DNF (suma de productos)
+        req_parts = (requirements_text
+            .replace("(c)", "c")
+            .replace("(", "#(#")
+            .replace(")", "#)#")
+            .replace(" ", "#")
+            .split("#")
+        )
+
+        req_list = [x for x in set(req_parts) if x not in ["", "y", "o", "(", ")"]]
+        syms = symbols(":" + str(len(req_list)))
+        req_dict = {}
+        for i, code in enumerate(req_list):
+            req_dict[code] = syms[i]
+
+        formula = to_dnf(get_formula(req_parts, req_dict))
+
+        for group_str in str(formula).split("|"):
+            group = []
+            group_syms = group_str.strip("( )").split(" & ")
+            for sym_name in group_syms:
+                group.append(req_list[int(sym_name)])
+            requirements.append(group)
+            
     return requirements
 
 
