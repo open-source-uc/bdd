@@ -1,9 +1,11 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
+
 from .code_iterator import CodeIterator
 from ...db import (
     Campus,
     ClassSchedule,
     Course,
+    CoursesTeachers,
     DayEnum,
     PeriodEnum,
     Subject,
@@ -30,6 +32,7 @@ async def search_bc_code(
 ) -> int:
     "Search code in Buscacursos and save courses to DB"
     log.info("Searching %s in Buscacursos", base_code)
+    global term_id
 
     try:
         courses = await get_courses(base_code, year, semester, session=bc_session)
@@ -42,10 +45,11 @@ async def search_bc_code(
             log.info("Found %s-%i", c["code"], c["section"])
             try:
                 # Get or create instance
-                course_query = select(Course).where(
+                course_query = select(Course).join(Subject).where(
                     Course.section == c["section"],
                     Course.term_id == term_id,
-                    Course.subject.code == c["code"],
+                    Subject.code == c["code"],
+                    Course.subject_id == Subject.id,
                 )
                 course: Course = db_session.exec(course_query).one_or_none()
                 if not course:
@@ -100,39 +104,39 @@ async def search_bc_code(
                 course.campus_id = campus_id
 
                 # Set Teachers
-                old_teacher_names: set[str] = set()
-                for old_teacher in course.teachers:
-                    old_teacher_name = old_teacher.name
-                    if old_teacher_name not in c["teachers"]:
-                        course.teachers.remove(old_teacher)
-                    else:
-                        old_teacher_names.add(old_teacher_name)
-
-                for new_teacher_name in set(c["teachers"]) - old_teacher_names:
+                if course.id is not None:
+                    db_session.exec(
+                        delete(CoursesTeachers).where(CoursesTeachers.course_id == course.id)
+                    )
+                teachers = []
+                for teacher_name in c["teachers"]:
                     teacher = db_session.exec(
-                        select(Teacher).where(Teacher.name == new_teacher_name)
+                        select(Teacher).where(Teacher.name == teacher_name)
                     ).one_or_none()
                     if not teacher:
-                        teacher = Teacher(name=new_teacher_name)
+                        teacher = Teacher(name=teacher_name)
                         try:
                             db_session.add(teacher)
                             db_session.commit()
                         except Exception:
-                            log.error("Cannot save teacher: %s", c[new_teacher_name], exc_info=True)
+                            log.error("Cannot save teacher: %s", teacher_name, exc_info=True)
                             errors.add(c["code"])
                             db_session.rollback()
                             continue
 
-                    course.teachers.append(teacher)
+                        teachers.append(teacher)
+                course.teachers = teachers
 
                 # Set schedule if changed (or new)
-                # NOTE(nico-mac): this could be optimized to only delete/add in DB
-                # schedule parts that actually changed
                 if course.schedule_summary != str(c["schedule"]):
                     course.schedule_summary = str(c["schedule"])
-                    for schedule in course.schedule:
-                        db_session.delete(schedule)
 
+                    if course.id is not None:
+                        db_session.exec(
+                            delete(ClassSchedule).where(ClassSchedule.course_id == course.id)
+                        )
+
+                    schedule_list = []
                     for schedule_part_data in c["schedule"]:
                         day, module = schedule_part_data["module"]
                         schedule_part = ClassSchedule(
@@ -141,7 +145,8 @@ async def search_bc_code(
                             classroom=schedule_part_data["classroom"],
                             type=schedule_part_data["type"],
                         )
-                        course.schedule.append(schedule_part)
+                        schedule_list.append(schedule_part)
+                    course.schedule = schedule_list
 
                 # Save to DB and cache
                 try:
@@ -175,6 +180,7 @@ async def get_full_buscacursos(db_session: Session, year: int, semester: int) ->
         term = Term(year=year, period=period)
         db_session.add(term)
         db_session.commit()
+    global term_id
     term_id = term.id
 
     # Search all

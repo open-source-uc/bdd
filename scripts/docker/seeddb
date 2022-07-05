@@ -13,7 +13,7 @@ dk_env=dev
 while getopts hp option; do
     case $option in
         h) Help; exit;;
-        p) env=prod;;
+        p) dk_env=prod;;
    esac
 done
 
