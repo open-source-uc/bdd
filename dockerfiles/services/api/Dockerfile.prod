@@ -21,3 +21,4 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 # Aditional files
 COPY readme.md ./
 COPY src/ src/
+COPY scripts/ scripts/
