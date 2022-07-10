@@ -1,6 +1,9 @@
+
 # BDDUC
 
 **Base De Datos Unificada y Comunitaria 📚**
+
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/open-source-uc/bdd/main.svg)](https://results.pre-commit.ci/latest/github/open-source-uc/bdd/main)
 
 ## SetUp
 
