@@ -1,12 +1,12 @@
 import asyncio
 import re
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, Optional
 
 if TYPE_CHECKING:
     import bs4
     from aiohttp import ClientSession as Session
 
-    ParseStrategy = dict[str, Optional[Callable[[bs4.element.Tag], Any]]]
+    ParseStrategy = Dict[str, Optional[Callable[[bs4.element.Tag], Any]]]
 
 
 def clean_text(tag: "bs4.element.Tag") -> "str":
@@ -18,12 +18,12 @@ def tag_to_int_value(tag: "bs4.element.Tag") -> "int":
     return int(clean_text(tag))
 
 
-async def gather_routines(tasks: list[Coroutine]):
+async def gather_routines(tasks: List[Coroutine]):
     "Wrapper de asyncio.gather, que utiliza listas en vez de tuplas"
     return list(await asyncio.gather(*tasks))
 
 
-def run_parse_strategy(ps: "ParseStrategy", tags: "list[bs4.element.Tag]"):
+def run_parse_strategy(ps: "ParseStrategy", tags: "List[bs4.element.Tag]"):
     """
     Corre funciones para obtener los datos en una lista de tags.
     Por ejemplo:
@@ -35,7 +35,7 @@ def run_parse_strategy(ps: "ParseStrategy", tags: "list[bs4.element.Tag]"):
     {"titulo": "Hola mundo", "elementos": ["A", "B", "C"] }
     ```
     """
-    data: "dict[str, Any]" = {}
+    data: "Dict[str, Any]" = {}
     # Esto asume que el diccionario es ordenado (Python ^3.8)
     for value_tag, col_name in zip(tags, ps):
         parse_fn = ps.get(col_name, None)

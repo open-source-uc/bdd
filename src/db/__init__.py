@@ -22,11 +22,14 @@ from .schema import (
     Teacher,
     Term,
     UniversityEvents,
+    Faculty,
 )
 
 
 def create_engine(*, user: str, password: str, db_name: str, host: str, driver: str = "postgresql"):
-    return _create_engine(f"{driver}://{user}:{password}@{host}/{db_name}", )
+    return _create_engine(
+        f"{driver}://{user}:{password}@{host}/{db_name}",
+    )
 
 
 engine = create_engine(

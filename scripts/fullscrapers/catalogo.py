@@ -1,4 +1,5 @@
 from string import ascii_uppercase
+from typing import Dict, Optional, Set
 from sqlmodel import Session, select
 from scripts.fullscrapers.code_iterator import CodeIterator
 from src.db import School, Subject
@@ -8,9 +9,9 @@ from . import log
 
 
 # Cache
-schools_cache: dict[str, int] = {}
-subjects_cache: set[str] = set()
-errors: set[str] = set()
+schools_cache: Dict[str, Optional[int]] = {}
+subjects_cache: Set[str] = set()
+errors: Set[str] = set()
 
 MAX_CATALOGO = 1000
 
@@ -100,7 +101,7 @@ async def get_full_catalogo(db_session: Session) -> None:
 
     # Retry errors with new session
     async with request.catalogo() as catalogo_session:
-        initial_errors: set[str] = errors.copy()
+        initial_errors: Set[str] = errors.copy()
         errors.clear()
         for code in initial_errors:
             await search_catalogo_code(code, db_session, catalogo_session)

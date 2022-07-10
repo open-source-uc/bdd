@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 
@@ -10,7 +11,7 @@ from ..utils import get_db
 place_router = APIRouter()
 
 
-@place_router.get("/", response_model=list[Place])
+@place_router.get("/", response_model=List[Place])
 async def get_places(db: Session = Depends(get_db)):
     return db.exec(select(Place)).all()
 

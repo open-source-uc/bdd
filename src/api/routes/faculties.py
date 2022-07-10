@@ -9,6 +9,7 @@ from ..utils import get_db
 
 faculty_router = APIRouter()
 
+
 @faculty_router.get("/", response_model=Page[Faculty])
 def get_faculties(db: Session = Depends(get_db)):
     return paginate(db, select(Faculty))
