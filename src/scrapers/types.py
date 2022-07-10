@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import List, Optional, Tuple, TypedDict
 
 
 class ScrappedSubject(TypedDict):
@@ -10,12 +10,12 @@ class ScrappedSubject(TypedDict):
     is_active: bool
     description: Optional[str]
     syllabus: str
-    requirements: list[list[str]]
+    requirements: List[List[str]]
     prerequisites_raw: str
-    equivalencies: list[list[str]]
+    equivalencies: List[List[str]]
     equivalencies_raw: str
     relationship: str
-    restrictions: list[tuple[str, str]]
+    restrictions: List[Tuple[str, str]]
 
 
 class ScheduleItem(TypedDict):
@@ -40,7 +40,7 @@ class ScrappedCourse(TypedDict):
     ncr: str
     requires_special_approval: bool
     reserved_vacancy: str
-    schedule: list[ScheduleItem]
+    schedule: List[ScheduleItem]
     section: int
-    teachers: list[str]
+    teachers: List[str]
     total_vacancy: int

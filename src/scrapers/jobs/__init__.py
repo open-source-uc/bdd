@@ -5,6 +5,7 @@ from time import time
 SCRIPT_LOG = "script"
 log = logging.getLogger(SCRIPT_LOG)
 
+
 def initialize_log():
     formatter = logging.Formatter("%(asctime)s (%(filename)s) %(levelname)s: %(message)s")
 

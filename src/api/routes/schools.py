@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends
-from sqlmodel import Session, select
-
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
+from sqlmodel import Session, select
 
 from ...db import School, Subject
 from ..utils import get_db

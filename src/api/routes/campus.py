@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
-from sqlmodel import Session, select
+from typing import List
 
+from fastapi import APIRouter, Depends
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
+from sqlmodel import Session, select
 
 from ...db import Campus, Place
 from ..utils import get_db
@@ -10,7 +11,7 @@ from ..utils import get_db
 campus_router = APIRouter()
 
 
-@campus_router.get("/", response_model=list[Campus])
+@campus_router.get("/", response_model=List[Campus])
 async def get_campuses(db: Session = Depends(get_db)):
     return db.exec(select(Campus)).all()
 

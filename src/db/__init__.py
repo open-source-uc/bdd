@@ -1,9 +1,11 @@
-from sqlmodel import create_engine as _create_engine, SQLModel
-from ..config import config
+from sqlmodel import SQLModel
+from sqlmodel import create_engine as _create_engine
 
+from ..config import config
 from .events import UniversityEvents
 from .places import Campus, CategoryOfPlace, Place, PlaceCategory
 from .subject import (
+    Campus,
     ClassSchedule,
     Course,
     CoursesTeachers,

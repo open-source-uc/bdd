@@ -1,7 +1,7 @@
+from sqlmodel import Session, delete
 from sqlmodel.sql.expression import select
 
-from sqlmodel import Session, delete
-from src.db import engine, Subject
+from src.db import Subject, engine
 
 
 def test_prerequisites():

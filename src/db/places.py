@@ -8,20 +8,20 @@ from sqlmodel import Field, Relationship, SQLModel
 # from geoalchemy2 import Geometry
 
 
-class Campus(SQLModel, table=True):
+class Campus(SQLModel, table=True):  # type: ignore  # noqa # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     places: List["Place"] = Relationship()
 
 
-class CategoryOfPlace(SQLModel, table=True):
+class CategoryOfPlace(SQLModel, table=True):  # type: ignore  # noqa # type: ignore  # noqa
     category_id: Optional[int] = Field(
         default=None, foreign_key="placecategory.id", primary_key=True
     )
     place_id: Optional[int] = Field(default=None, foreign_key="place.id", primary_key=True)
 
 
-class Place(SQLModel, table=True):
+class Place(SQLModel, table=True):  # type: ignore  # noqa # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     lat: float
     lng: float
@@ -42,7 +42,7 @@ class Place(SQLModel, table=True):
     child: "Place" = Relationship()
 
 
-class PlaceCategory(SQLModel, table=True):
+class PlaceCategory(SQLModel, table=True):  # type: ignore  # noqa # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     places: list[Place] = Relationship(back_populates="categories", link_model=CategoryOfPlace)

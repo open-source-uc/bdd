@@ -1,15 +1,16 @@
+from typing import Optional
+
 from sqlmodel import Session, delete, select
 
-from .code_iterator import CodeIterator
-from ...db import School, Subject, SubjectPrerequisites, SubjectEquivalencies
-from ..catalogo import get_subjects, get_additional_info, get_syllabus
-from ..description import get_description
+from ...db import School, Subject, SubjectEquivalencies, SubjectPrerequisites
 from .. import request
+from ..catalogo import get_additional_info, get_subjects, get_syllabus
+from ..description import get_description
 from . import log
-
+from .code_iterator import CodeIterator
 
 # Cache
-schools_cache: dict[str, int] = {}
+schools_cache: dict[str, Optional[int]] = {}
 subjects_cache: set[str] = set()
 errors: set[str] = set()
 
@@ -45,7 +46,7 @@ async def search_catalogo_code(base_code: str, db_session: Session, catalogo_ses
                 subject.is_active = s["is_active"]
 
                 # Check school (use cache)
-                school_id = schools_cache.get(s["school_name"])
+                school_id: Optional[int] = schools_cache.get(s["school_name"])
                 if not school_id:
                     school_query = select(School).where(School.name == s["school_name"])
                     school = db_session.exec(school_query).one_or_none()
@@ -119,10 +120,11 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
             db_session.exec(
                 delete(SubjectEquivalencies).where(SubjectEquivalencies.subject_id == subject.id)
             )
+            req_subject_id: Subject
             if "equivalencies" in data:
                 for i, group in enumerate(data["equivalencies"]):
                     for req_code in group:
-                        req_subject_id: Subject = (
+                        req_subject_id = (
                             db_session.exec(select(Subject).where(Subject.code == req_code))
                             .one_or_none()
                             .id
@@ -144,8 +146,8 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
                         if req_code[-1] == "c":
                             is_corequisite = True
                             req_code = req_code.strip("c")
-                    
-                        req_subject_id: Subject = (
+
+                        req_subject_id = (
                             db_session.exec(select(Subject).where(Subject.code == req_code))
                             .one_or_none()
                             .id
@@ -180,8 +182,9 @@ async def get_full_catalogo(db_session: Session) -> None:
                 code_generator.add_depth()
 
     # Retry errors with new session
+    initial_errors: set[str]
     async with request.catalogo() as catalogo_session:
-        initial_errors: set[str] = errors.copy()
+        initial_errors = errors.copy()
         errors.clear()
         for code in initial_errors:
             await search_catalogo_code(code, db_session, catalogo_session)
@@ -197,7 +200,7 @@ async def get_full_catalogo(db_session: Session) -> None:
 
     # Retry errors with new session
     async with request.catalogo() as catalogo_session:
-        initial_errors: set[str] = errors.copy()
+        initial_errors = errors.copy()
         errors.clear()
         for code in initial_errors:
             await search_additional_info(code, db_session, catalogo_session)

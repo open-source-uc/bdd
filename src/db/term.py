@@ -25,8 +25,9 @@ class PeriodEnum(str, enum.Enum):
         return cls(["S1", "S2", "TAV"][value - 1])
 
 
-class Term(SQLModel, table=True):
+class Term(SQLModel, table=True):  # type: ignore  # noqa
     """Academic semester of a year"""
+
     id: Optional[int] = Field(default=None, primary_key=True)
     year: int
     period: PeriodEnum = Field(sa_column=Column(SQLEnum(PeriodEnum)))

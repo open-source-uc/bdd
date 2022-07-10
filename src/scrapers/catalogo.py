@@ -19,11 +19,11 @@ asyncio.run(main())
 
 import html
 import re
-from sympy import Symbol, symbols
-from sympy.logic.boolalg import And, Or, to_dnf, simplify_logic
-from typing import TYPE_CHECKING, Callable, Optional, cast
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Union
 
 import bs4
+from sympy import Symbol, symbols
+from sympy.logic.boolalg import And, Or, simplify_logic, to_dnf
 
 from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
 
@@ -56,14 +56,14 @@ COLUMNS_STRATEGIES: "ParseStrategy" = {
     "bc": None,
 }
 
-BASE_SUBJECT_PARAMS = {
+BASE_SUBJECT_PARAMS: Dict[str, Union[str, int]] = {
     "ItemId": 378,
     "option": "com_catalogo",
     "view": "cursoslist",
     "tmpl": "component",
 }
 
-BASE_REQUIREMENTS_PARAMS = {"view": "requisitos", "tmpl": "component"}
+BASE_REQUIREMENTS_PARAMS: Dict[str, str] = {"view": "requisitos", "tmpl": "component"}
 
 
 def _finder_by_text_table_key(key: str):
@@ -85,13 +85,13 @@ def find_text_by_table_key(soup: "bs4.BeautifulSoup", key: "str"):
 
 
 def get_formula(elements_list: list[str], req_dict: dict[str, Symbol]):
-    relation_func: Callable = None
+    relation_func: Optional[Callable] = None
     variables = []
     while len(elements_list) != 0:
         el = elements_list.pop(0)
         if el == "":
             continue
-        elif el == '(':
+        elif el == "(":
             variables.append(get_formula(elements_list, req_dict))
         elif el == ")":
             if relation_func is not None:
@@ -114,8 +114,8 @@ def parse_requirements_groups(requirements_text: str):
     requirements = []
     if requirements_text != "No tiene":
         # Convertir a DNF (suma de productos)
-        req_parts = (requirements_text
-            .replace("(c)", "c")
+        req_parts = (
+            requirements_text.replace("(c)", "c")
             .replace("(", "#(#")
             .replace(")", "#)#")
             .replace(" ", "#")
@@ -136,7 +136,7 @@ def parse_requirements_groups(requirements_text: str):
             for sym_name in group_syms:
                 group.append(req_list[int(sym_name)])
             requirements.append(group)
-            
+
     return requirements
 
 
@@ -209,7 +209,11 @@ async def get_subjects(
     code: str, *, session: "Session", all_subjects: bool = True, all_info: bool = True
 ) -> "list[ScrappedSubject]":
     "Obtiene los ramos por su sigla"
-    params = BASE_SUBJECT_PARAMS | {"sigla": code, "vigencia": 2 * int(all_subjects)}
+    subject_params: Dict[str, Union[str, int]] = {
+        "sigla": code,
+        "vigencia": 2 * int(all_subjects),
+    }
+    params: Dict[str, Union[str, int]] = BASE_SUBJECT_PARAMS | subject_params
     async with session.post("/index.php", params=params) as response:
         body = await response.read()
     soup = bs4.BeautifulSoup(body, "lxml")

@@ -1,10 +1,10 @@
-from typing import Union
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session, select, col
 import re
+from typing import Union
 
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
+from sqlmodel import Session, col, select
 
 from ...db import Course, Subject, Term
 from ..utils import get_db

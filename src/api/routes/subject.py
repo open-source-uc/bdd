@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
+from sqlmodel import Session, select
 
-from ...db import Subject, Course, PeriodEnum, Term
+from ...db import Course, PeriodEnum, Subject, Term
 from ..utils import get_db
 
 subject_router = APIRouter()
@@ -26,7 +27,7 @@ def get_subject(subject_code: str, db: Session = Depends(get_db)):
 
 
 @subject_router.get("/{subject_code}/sections", response_model=Page[Course])
-def get_subject(
+def get_subject_sections(
     subject_code: str, year: int = None, period: str = None, db: Session = Depends(get_db)
 ):
     query = (
@@ -53,7 +54,7 @@ def get_subject_requirements(id: int, db: Session = Depends(get_db)):
 
 
 @subject_router.get("/{id}/sections")
-def get_all_course_sections(id: int, db: Session = Depends(get_db)) -> list[Course]:
+def get_all_course_sections(id: int, db: Session = Depends(get_db)) -> List[Course]:
     subject = db.exec(select(Subject).where(Subject.id == id)).one_or_none()
     if subject is None:
         raise HTTPException(404)

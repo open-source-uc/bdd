@@ -4,7 +4,7 @@ from typing import List, Optional
 from sqlmodel import Field, SQLModel
 
 
-class UniversityEvents(SQLModel, table=True):
+class UniversityEvents(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     start: datetime

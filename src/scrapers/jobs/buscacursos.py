@@ -1,6 +1,7 @@
-from sqlmodel import Session, select, delete
+from typing import Dict, Optional, Set, Union
 
-from .code_iterator import CodeIterator
+from sqlmodel import Session, delete, select
+
 from ...db import (
     Campus,
     ClassSchedule,
@@ -12,19 +13,20 @@ from ...db import (
     Teacher,
     Term,
 )
-from ..buscacursos import get_courses
 from .. import request
-from .catalogo import search_additional_info, search_catalogo_code
+from ..buscacursos import get_courses
 from . import log
+from .catalogo import search_additional_info, search_catalogo_code
+from .code_iterator import CodeIterator
 
 MAX_BC = 50
 
 # Cache
-term_id: int = None
-courses_cache: set[str] = set()
-campus_cache: dict[str, int] = {}
-subject_cache: dict[str, int] = {}
-errors: set[str] = set()
+term_id: Union[int, None] = None
+courses_cache: Set[str] = set()
+campus_cache: Dict[str, Optional[int]] = {}
+subject_cache: Dict[str, Optional[int]] = {}
+errors: Set[str] = set()
 
 
 async def search_bc_code(
@@ -45,18 +47,22 @@ async def search_bc_code(
             log.info("Found %s-%i", c["code"], c["section"])
             try:
                 # Get or create instance
-                course_query = select(Course).join(Subject).where(
-                    Course.section == c["section"],
-                    Course.term_id == term_id,
-                    Subject.code == c["code"],
-                    Course.subject_id == Subject.id,
+                course_query = (
+                    select(Course)
+                    .join(Subject)
+                    .where(
+                        Course.section == c["section"],
+                        Course.term_id == term_id,
+                        Subject.code == c["code"],
+                        Course.subject_id == Subject.id,
+                    )
                 )
                 course: Course = db_session.exec(course_query).one_or_none()
                 if not course:
                     course = Course()
 
                 # Set Subject
-                subject_id = subject_cache.get(c["code"])
+                subject_id: Optional[int] = subject_cache.get(c["code"])
                 if not subject_id:
                     subject_query = select(Subject).where(Subject.code == c["code"])
                     subject = db_session.exec(subject_query).one_or_none()
@@ -192,7 +198,7 @@ async def get_full_buscacursos(db_session: Session, year: int, semester: int) ->
 
     # Retry errors with new session
     async with request.buscacursos() as bc_session:
-        initial_errors: set[str] = errors.copy()
+        initial_errors: Set[str] = errors.copy()
         errors.clear()
         for code in initial_errors:
             await search_bc_code(code, year, semester, db_session, bc_session)
