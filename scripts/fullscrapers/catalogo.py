@@ -1,4 +1,3 @@
-from string import ascii_uppercase
 from typing import Dict, Optional, Set
 
 from sqlmodel import Session, select

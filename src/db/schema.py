@@ -2,8 +2,7 @@ import enum
 from datetime import date, datetime
 from typing import List, Optional
 
-from sqlalchemy import Column, Index, sql
-from sqlalchemy.sql.expression import true
+from sqlalchemy import Column
 
 # sqlalchemy debería ser evitado, pero la API de sqlmodel no es tan completa aún
 from sqlalchemy.sql.sqltypes import Enum as SQLEnum

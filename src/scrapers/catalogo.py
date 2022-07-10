@@ -19,7 +19,7 @@ asyncio.run(main())
 
 import html
 import re
-from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import bs4
 
