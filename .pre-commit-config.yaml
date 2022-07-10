@@ -16,12 +16,6 @@ repos:
         args: ["--fix=lf"]
       - id: name-tests-test
       - id: check-ast
-      - id: no-commit-to-branch
-        args:
-          - "--branch"
-          - "main"
-          - "--branch"
-          - "develop"
 
   - repo: https://github.com/psf/black
     rev: 22.6.0
