@@ -1,4 +1,6 @@
-import os, sys
+import os
+import sys
+
 from dotenv import load_dotenv
 
 sys.path.insert(0, os.getcwd())
@@ -7,10 +9,11 @@ load_dotenv()
 
 import asyncio
 from time import time
-from sqlmodel import Session
-from src.db import engine, create_db
-from fullscrapers import buscacursos, catalogo, initialize_log
 
+from fullscrapers import buscacursos, catalogo, initialize_log
+from sqlmodel import Session
+
+from src.db import create_db, engine
 
 # Start script
 initialize_log()

@@ -19,12 +19,11 @@ asyncio.run(main())
 
 import itertools
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple
 
 import bs4
 
-from .utils import (clean_text, gather_routines, run_parse_strategy,
-                    tag_to_int_value)
+from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
 
 if TYPE_CHECKING:
     from .types import ScrappedCourse
@@ -36,8 +35,8 @@ ACADEMIC_UNIT_FINDER = {"attrs": {"style": None, "class": None}, "text": NON_EMP
 MISSING_CLASSROM_RE = re.compile(r"\(?Por Asignar\(?")
 
 
-def parse_schedule_row(row: "bs4.element.Tag"):
-    packed_data: "list[str]" = [r.text.strip() for r in row.find_all("td")]
+def parse_schedule_row(row: bs4.element.Tag):
+    packed_data: List[str] = [r.text.strip() for r in row.find_all("td")]
     module_schedule, module_type, classroom, *_ = packed_data
     days_raw, hours_raw = module_schedule.split(":")
 
@@ -52,7 +51,7 @@ def parse_schedule_row(row: "bs4.element.Tag"):
     ]
 
 
-def parse_schedule(row_value_tag: "bs4.element.Tag"):
+def parse_schedule(row_value_tag: bs4.element.Tag):
     schedule_table = row_value_tag.find("table")
     schedule = []
     if isinstance(schedule_table, bs4.element.Tag):
@@ -65,7 +64,7 @@ MISSING_TEACHERS_RE = re.compile(r"Sin Profesores")
 NONPERSON_TEACHERS_RE = re.compile(r"(Dirección Docente)|(Por Fijar)")
 
 
-def parse_teachers(row_value_tag: "bs4.element.Tag"):
+def parse_teachers(row_value_tag: bs4.element.Tag):
     raw_info = row_value_tag.text.strip()
     if MISSING_TEACHERS_RE.match(raw_info):
         return []
@@ -102,7 +101,7 @@ COLUMNS_STRATEGIES: "ParseStrategy" = {
 }
 
 
-async def parse_row(row: "bs4.element.Tag"):
+async def parse_row(row: bs4.element.Tag):
     data = {}
     school_tag = row.find_previous_sibling(**ACADEMIC_UNIT_FINDER)
     if isinstance(school_tag, bs4.element.Tag):
@@ -113,7 +112,7 @@ async def parse_row(row: "bs4.element.Tag"):
 MATCH_RESULT_ROW = {"class": re.compile("resultados")}
 
 
-async def get_courses_raw(session: "Session", **params) -> "list[ScrappedCourse]":
+async def get_courses_raw(session: "Session", **params) -> List["ScrappedCourse"]:
     "Obtiene los cursos utilizando, usando los parámetros del URL"
     async with session.get("/", params=params) as response:
         body = await response.read()
@@ -135,7 +134,7 @@ async def get_available_terms(session: "Session"):
     soup = bs4.BeautifulSoup(body, "lxml")
 
     academic_period_selector = soup.find("select", {"name": "cxml_semestre"})
-    academic_periods: "list[tuple[int, int]]" = []
+    academic_periods: List[Tuple[int, int]] = []
     if isinstance(academic_period_selector, bs4.element.Tag):
         for option in academic_period_selector.findChildren("option"):
             if isinstance(option, bs4.element.Tag):

@@ -19,12 +19,11 @@ asyncio.run(main())
 
 import html
 import re
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import bs4
 
-from .utils import (clean_text, gather_routines, run_parse_strategy,
-                    tag_to_int_value)
+from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
 
 if TYPE_CHECKING:
     from .types import ScrappedSubject
@@ -55,14 +54,14 @@ COLUMNS_STRATEGIES: "ParseStrategy" = {
     "bc": None,
 }
 
-BASE_SUBJECT_PARAMS = {
+BASE_SUBJECT_PARAMS: Dict[str, Union[str, int]] = {
     "ItemId": 378,
     "option": "com_catalogo",
     "view": "cursoslist",
     "tmpl": "component",
 }
 
-BASE_REQUIREMENTS_PARAMS = {"view": "requisitos", "tmpl": "component"}
+BASE_REQUIREMENTS_PARAMS: Dict[str, str] = {"view": "requisitos", "tmpl": "component"}
 
 
 def _finder_by_text_table_key(key: str):
@@ -164,9 +163,13 @@ async def parse_row(row: "bs4.element.Tag", session: "Session"):
 
 async def get_subjects(
     code: str, *, session: "Session", all_subjects: bool = True
-) -> "list[ScrappedSubject]":
+) -> "List[ScrappedSubject]":
     "Obtiene los ramos por su sigla"
-    params = BASE_SUBJECT_PARAMS | {"sigla": code, "vigencia": 2 * int(all_subjects)}
+    subject_params: Dict[str, Union[str, int]] = {
+        "sigla": code,
+        "vigencia": 2 * int(all_subjects),
+    }
+    params: Dict[str, Union[str, int]] = BASE_SUBJECT_PARAMS | subject_params
     async with session.post("/index.php", params=params) as response:
         body = await response.read()
     soup = bs4.BeautifulSoup(body, "lxml")

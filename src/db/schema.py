@@ -2,8 +2,8 @@ import enum
 from datetime import date, datetime
 from typing import List, Optional
 
-from sqlalchemy import Column, Index, sql
-from sqlalchemy.sql.expression import true
+from sqlalchemy import Column
+
 # sqlalchemy debería ser evitado, pero la API de sqlmodel no es tan completa aún
 from sqlalchemy.sql.sqltypes import Enum as SQLEnum
 from sqlmodel import Field, Relationship, SQLModel
@@ -17,13 +17,13 @@ from sqlmodel import Field, Relationship, SQLModel
 # JoinTables tienen que estar antes de los modelos que unen
 
 
-class SubjectEquivalencies(SQLModel, table=True):
+class SubjectEquivalencies(SQLModel, table=True):  # type: ignore  # noqa
     # __tablename__ = "subject_equivalencies"  # type: ignore
     subject_id: Optional[int] = Field(default=None, foreign_key="subject.id", primary_key=True)
     equivalence_id: Optional[int] = Field(default=None, foreign_key="subject.id", primary_key=True)
 
 
-class CoursesTeachers(SQLModel, table=True):
+class CoursesTeachers(SQLModel, table=True):  # type: ignore  # noqa
     course_id: Optional[int] = Field(default=None, foreign_key="course.id", primary_key=True)
     teacher_id: Optional[int] = Field(default=None, foreign_key="teacher.id", primary_key=True)
 
@@ -34,11 +34,13 @@ class RequirementRelationEnum(str, enum.Enum):
 
     @classmethod
     def from_catalogo(cls, value: str):
-        if value == "y": return cls(cls.AND)
-        if value == "o": return cls(cls.OR)
+        if value == "y":
+            return cls(cls.AND)
+        if value == "o":
+            return cls(cls.OR)
 
 
-class Subject(SQLModel, table=True):
+class Subject(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     credits: Optional[int] = None
@@ -90,7 +92,7 @@ class Subject(SQLModel, table=True):
         self.prerequisites = group
 
 
-class PrerequisitesOrGroupElement(SQLModel, table=True):
+class PrerequisitesOrGroupElement(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
     subject: Subject = Relationship(back_populates="prerequisites")
@@ -103,7 +105,7 @@ class PrerequisitesOrGroupElement(SQLModel, table=True):
         return f"<{type(self).__name__} [{[g.subject for g in self.child_and_groups]}]>"
 
 
-class PrerequisitesAndGroupElement(SQLModel, table=True):
+class PrerequisitesAndGroupElement(SQLModel, table=True):  # type: ignore  # noqa
     prerequisites_or_group_element_id: Optional[int] = Field(
         default=None,
         foreign_key="PrerequisitesOrGroupElement.id".lower(),
@@ -118,12 +120,12 @@ class PrerequisitesAndGroupElement(SQLModel, table=True):
     subject: "Subject" = Relationship()
 
 
-class RestrictionsOrGroup(SQLModel, table=True):
+class RestrictionsOrGroup(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     subject_id: int = Field(foreign_key="subject.id")
 
 
-class RestrictionsAndGroup(SQLModel, table=True):
+class RestrictionsAndGroup(SQLModel, table=True):  # type: ignore  # noqa
     restrictions_or_group_id: int = Field(foreign_key="restrictionsorgroup.id", primary_key=True)
     restriction: str
 
@@ -144,7 +146,7 @@ class PeriodEnum(str, enum.Enum):
         return cls(["S1", "S2", "TAV"][value - 1])
 
 
-class Term(SQLModel, table=True):
+class Term(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     year: int
     period: PeriodEnum = Field(sa_column=Column(SQLEnum(PeriodEnum)))
@@ -153,7 +155,7 @@ class Term(SQLModel, table=True):
     last_day: Optional[date] = None
 
 
-class Course(SQLModel, table=True):
+class Course(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     subject_id: Optional[int] = Field(default=None, foreign_key="subject.id")
     subject: Subject = Relationship(back_populates="courses")
@@ -176,7 +178,7 @@ class Course(SQLModel, table=True):
     teachers: List["Teacher"] = Relationship(back_populates="courses", link_model=CoursesTeachers)
 
 
-class Campus(SQLModel, table=True):
+class Campus(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     places: List["Place"] = Relationship()
@@ -191,7 +193,7 @@ class DayEnum(str, enum.Enum):
     S = "S"
 
 
-class ClassSchedule(SQLModel, table=True):
+class ClassSchedule(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     day: DayEnum = Field(sa_column=Column(SQLEnum(DayEnum)))
     module: int = Field(ge=1, le=8)  # [1, 2, 3, 4, 5, 6, 7, 8]
@@ -201,7 +203,7 @@ class ClassSchedule(SQLModel, table=True):
     course: Course = Relationship(back_populates="schedule")
 
 
-class Teacher(SQLModel, table=True):
+class Teacher(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     photo_url: Optional[str] = None
@@ -210,7 +212,7 @@ class Teacher(SQLModel, table=True):
     courses: List["Course"] = Relationship(back_populates="teachers", link_model=CoursesTeachers)
 
 
-class School(SQLModel, table=True):
+class School(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     website: Optional[str] = None
@@ -218,14 +220,14 @@ class School(SQLModel, table=True):
     subjects: List[Subject] = Relationship(back_populates="school")
 
 
-class CategoryOfPlace(SQLModel, table=True):
+class CategoryOfPlace(SQLModel, table=True):  # type: ignore  # noqa
     category_id: Optional[int] = Field(
         default=None, foreign_key="placecategory.id", primary_key=True
     )
     place_id: Optional[int] = Field(default=None, foreign_key="place.id", primary_key=True)
 
 
-class Place(SQLModel, table=True):
+class Place(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     lat: float
     lng: float
@@ -246,13 +248,13 @@ class Place(SQLModel, table=True):
     child: "Place" = Relationship()
 
 
-class PlaceCategory(SQLModel, table=True):
+class PlaceCategory(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    places: list[Place] = Relationship(back_populates="categories", link_model=CategoryOfPlace)
+    places: List[Place] = Relationship(back_populates="categories", link_model=CategoryOfPlace)
 
 
-class UniversityEvents(SQLModel, table=True):
+class UniversityEvents(SQLModel, table=True):  # type: ignore  # noqa
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     start: datetime
@@ -260,3 +262,7 @@ class UniversityEvents(SQLModel, table=True):
     tag: str
     description: Optional[str]
     is_a_holiday: bool = False
+
+
+class Faculty(SQLModel, table=True):  # type: ignore  # noqa
+    id: Optional[int] = Field(default=None, primary_key=True)

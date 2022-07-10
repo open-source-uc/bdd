@@ -1,7 +1,7 @@
 from typing import List
 
-from sqlmodel import Session, select
 import strawberry
+from sqlmodel import Session, select
 
 from ....db import Subject, engine
 

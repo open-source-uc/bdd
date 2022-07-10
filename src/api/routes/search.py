@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
@@ -29,7 +31,7 @@ async def get_or_create_subject(code: str, db: Session):
     async with request.catalogo() as session:
         scrapped_subjects_data = await get_subjects(code, session=session)
 
-    subjects: "list[Subject]" = []
+    subjects: "List[Subject]" = []
     for subject_data in scrapped_subjects_data:
         new_subject = Subject(
             name=subject_data["name"],
@@ -51,9 +53,9 @@ async def get_or_create_subject(code: str, db: Session):
         new_subject.school = school
 
         # Encontrar los pre-requisitos
-        prerequisites: "list[list[Subject]]" = []
+        prerequisites: "List[List[Subject]]" = []
         for or_groups in subject_data["requirements"]:
-            or_group_list: "list[Subject]" = []
+            or_group_list: "List[Subject]" = []
             for course_code in or_groups:
                 requirement_course = await get_or_create_subject(course_code, db)
                 if not requirement_course:
@@ -76,7 +78,7 @@ async def get_or_create_academic_term(year: int, period: PeriodEnum, db: Session
         return term
 
     print(f"Searching academic term: year={year}, period={term}")
-    terms: "list[Term]" = []
+    terms: "List[Term]" = []
     async with request.buscacursos() as session:
         for (new_term_year, new_term_period) in await get_available_terms(session):
             new_term = Term(year=new_term_year, period=PeriodEnum.from_int(new_term_period))
@@ -95,8 +97,8 @@ def get_or_create_campus(campus_name: str, db: Session):
     return campus
 
 
-def get_or_create_teachers(teachers_names: list[str], db: Session):
-    teachers: list[Teacher] = []
+def get_or_create_teachers(teachers_names: List[str], db: Session):
+    teachers: List[Teacher] = []
     for teacher_name in teachers_names:
         teacher = db.exec(select(Teacher).where(Teacher.name == teacher_name)).one_or_none()
         if not teacher:

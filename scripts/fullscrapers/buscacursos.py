@@ -1,4 +1,7 @@
+from typing import Dict, Optional, Set, Union
+
 from sqlmodel import Session, select
+
 from scripts.fullscrapers.code_iterator import CodeIterator
 from src.db import (
     Campus,
@@ -11,17 +14,18 @@ from src.db import (
     Term,
 )
 from src.scrapers import get_courses, request
-from .catalogo import search_catalogo_code
+
 from . import log
+from .catalogo import search_catalogo_code
 
 MAX_BC = 50
 
 # Cache
-term_id: int = None
-courses_cache: set[str] = set()
-campus_cache: dict[str, int] = {}
-subject_cache: dict[str, int] = {}
-errors: set[str] = set()
+term_id: Union[int, None] = None
+courses_cache: Set[str] = set()
+campus_cache: Dict[str, Optional[int]] = {}
+subject_cache: Dict[str, Optional[int]] = {}
+errors: Set[str] = set()
 
 
 async def search_bc_code(
@@ -51,7 +55,7 @@ async def search_bc_code(
                     course = Course()
 
                 # Set Subject
-                subject_id = subject_cache.get(c["code"])
+                subject_id: Optional[int] = subject_cache.get(c["code"])
                 if not subject_id:
                     subject_query = select(Subject).where(Subject.code == c["code"])
                     subject = db_session.exec(subject_query).one_or_none()
@@ -98,7 +102,7 @@ async def search_bc_code(
                 course.campus_id = campus_id
 
                 # Set Teachers
-                old_teacher_names: set[str] = set()
+                old_teacher_names: Set[str] = set()
                 for old_teacher in course.teachers:
                     old_teacher_name = old_teacher.name
                     if old_teacher_name not in c["teachers"]:
@@ -184,7 +188,7 @@ async def get_full_buscacursos(db_session: Session, year: int, semester: int) ->
 
     # Retry errors with new session
     async with request.buscacursos() as bc_session:
-        initial_errors: set[str] = errors.copy()
+        initial_errors: Set[str] = errors.copy()
         errors.clear()
         for code in initial_errors:
             await search_bc_code(code, year, semester, db_session, bc_session)

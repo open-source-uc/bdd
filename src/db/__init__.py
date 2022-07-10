@@ -1,6 +1,7 @@
-from sqlmodel import create_engine as _create_engine, SQLModel
-from ..config import config
+from sqlmodel import SQLModel
+from sqlmodel import create_engine as _create_engine
 
+from ..config import config
 from .schema import (
     Campus,
     CategoryOfPlace,
@@ -8,6 +9,7 @@ from .schema import (
     Course,
     CoursesTeachers,
     DayEnum,
+    Faculty,
     PeriodEnum,
     Place,
     PlaceCategory,
@@ -26,7 +28,9 @@ from .schema import (
 
 
 def create_engine(*, user: str, password: str, db_name: str, host: str, driver: str = "postgresql"):
-    return _create_engine(f"{driver}://{user}:{password}@{host}/{db_name}", )
+    return _create_engine(
+        f"{driver}://{user}:{password}@{host}/{db_name}",
+    )
 
 
 engine = create_engine(

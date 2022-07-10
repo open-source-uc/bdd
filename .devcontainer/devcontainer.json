@@ -3,7 +3,7 @@
 	"dockerComposeFile": [
 		"../docker-compose.yml",
 		"../dockerfiles/docker-compose.dev.yml",
-		"docker-compose.yml",
+		"docker-compose.yml"
 	],
 	"service": "api",
 	"workspaceFolder": "/workspace",
@@ -12,7 +12,7 @@
 			"Dockerfile.dev": "dockerfile",
 			"Dockerfile.prod": "dockerfile",
 			"nginx.conf.prod": "nginx",
-			"nginx.conf.dev": "nginx",
+			"nginx.conf.dev": "nginx"
         }
 	},
 	"extensions": [
@@ -20,7 +20,7 @@
 		"ahmadalli.vscode-nginx-conf",
 		"EditorConfig.EditorConfig",
 		"aaron-bond.better-comments",
-		"ms-python.isort",
+		"ms-python.isort"
 	],
 	"postAttachCommand": ["echo", "run the server with\nuvicorn --reload src.api:app --host 0.0.0.0\n"]
 }
