@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict, List, Tuple
+from typing import List, Optional, Tuple, TypedDict
 
 
 class ScrappedSubject(TypedDict):

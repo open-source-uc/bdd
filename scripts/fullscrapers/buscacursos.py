@@ -1,5 +1,7 @@
 from typing import Dict, Optional, Set, Union
+
 from sqlmodel import Session, select
+
 from scripts.fullscrapers.code_iterator import CodeIterator
 from src.db import (
     Campus,
@@ -12,8 +14,9 @@ from src.db import (
     Term,
 )
 from src.scrapers import get_courses, request
-from .catalogo import search_catalogo_code
+
 from . import log
+from .catalogo import search_catalogo_code
 
 MAX_BC = 50
 

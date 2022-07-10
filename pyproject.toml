@@ -30,6 +30,9 @@ strawberry-graphql = {extras = ["debug-server"], version = "^0.85.0"}
 pytest = "^6.2.5"
 pre-commit = "^2.19.0"
 
+[tool.isort]
+profile = "black"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

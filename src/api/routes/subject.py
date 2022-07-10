@@ -1,11 +1,11 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
 
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
+from sqlmodel import Session, select
 
-from ...db import Subject, Course, PeriodEnum, Term
+from ...db import Course, PeriodEnum, Subject, Term
 from ..utils import get_db
 
 subject_router = APIRouter()

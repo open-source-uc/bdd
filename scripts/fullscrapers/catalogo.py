@@ -1,12 +1,14 @@
 from string import ascii_uppercase
 from typing import Dict, Optional, Set
+
 from sqlmodel import Session, select
+
 from scripts.fullscrapers.code_iterator import CodeIterator
 from src.db import School, Subject
 from src.db.schema import RequirementRelationEnum
-from src.scrapers import get_subjects, get_description, request
-from . import log
+from src.scrapers import get_description, get_subjects, request
 
+from . import log
 
 # Cache
 schools_cache: Dict[str, Optional[int]] = {}
