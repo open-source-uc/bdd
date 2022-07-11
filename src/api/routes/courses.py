@@ -6,7 +6,7 @@ from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
 from sqlmodel import Session, col, select
 
-from ...db import Course, Subject, Term
+from ...db import Course, Subject
 from ..utils import get_db
 
 course_router = APIRouter()
@@ -37,6 +37,8 @@ def get_courses(
         False, description="Ignore schedule collisions with AYU and LAB modules"
     ),
 ):
+    """Search like Buscacursos or RamosUC"""
+
     query = select(Course).join(Subject)
     if q is not None:
         if NUMBERS_EXP.match(query):
