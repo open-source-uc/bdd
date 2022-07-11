@@ -142,6 +142,7 @@ async def search_additional_info(code: str, db_session: Session, catalogo_sessio
             if "requirements" in data:
                 for i, group in enumerate(data["requirements"]):
                     for req_code in group:
+                        # Los co-requisitos están marcados con una 'c' final.
                         is_corequisite = False
                         if req_code[-1] == "c":
                             is_corequisite = True

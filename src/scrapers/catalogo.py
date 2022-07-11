@@ -85,6 +85,10 @@ def find_text_by_table_key(soup: "bs4.BeautifulSoup", key: "str"):
 
 
 def get_formula(elements_list: list[str], req_dict: dict[str, Symbol]):
+    '''Convierte una lista de componentes lógicos ['(', ')', '<sigla>', 'y', 'o'] 
+    en una BooleanFunction de Sympy (fórmula con semántica).
+    La función se llama recursivamente para cada grupo delimitado por paréntesis.
+    '''
     relation_func: Optional[Callable] = None
     variables = []
     while len(elements_list) != 0:
@@ -110,10 +114,14 @@ def get_formula(elements_list: list[str], req_dict: dict[str, Symbol]):
 
 
 def parse_requirements_groups(requirements_text: str):
-    # Los requisitos tienen forma "(A y B) o (A y C) o D(c)"
+    '''Transforma los requisitos en una fórmula lógica, 
+    la convierte a DNF y retorna la lista de grupos DNF.
+    Los requisitos tienen la forma "((A y B) o (A y C) o D(c)) y E"
+    Co-requisitos se retornan con una 'c' al final de la sigla.
+    '''
     requirements = []
     if requirements_text != "No tiene":
-        # Convertir a DNF (suma de productos)
+        # Primero se crea una lista con los componentes lógicos: '(', ')', '<sigla>', 'y', 'o'.
         req_parts = (
             requirements_text.replace("(c)", "c")
             .replace("(", "#(#")
@@ -128,8 +136,10 @@ def parse_requirements_groups(requirements_text: str):
         for i, code in enumerate(req_list):
             req_dict[code] = syms[i]
 
+        # Se convierte a una fórmula lógica (sympy BooleanFunction) y luego a DNF.
         formula = to_dnf(get_formula(req_parts, req_dict))
 
+        # Se reemplazan las variables lógicas por las siglas.
         for group_str in str(formula).split("|"):
             group = []
             group_syms = group_str.strip("( )").split(" & ")
