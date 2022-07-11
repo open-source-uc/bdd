@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Optional, Union
 
 import bs4
 from sympy import Symbol, symbols
-from sympy.logic.boolalg import And, Or, simplify_logic, to_dnf
+from sympy.logic.boolalg import And, Or, to_dnf
 
 from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
 
