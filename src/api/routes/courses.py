@@ -37,7 +37,7 @@ def get_courses(
         False, description="Ignore schedule collisions with AYU and LAB modules"
     ),
 ):
-    query = select(Course).join(Subject).where(Course.subject_id == Subject.id)
+    query = select(Course).join(Subject)
     if q is not None:
         if NUMBERS_EXP.match(query):
             query = query.where(Course.nrc == q)
@@ -51,7 +51,7 @@ def get_courses(
             )  # TODO: match teachers (or), case-insensitive, unaccent
 
     if term_id is not None:
-        query = query.join(Term).where(Course.term_id == Term.id, Term.id == term_id)
+        query = query.where(Course.term_id == term_id)
 
     if credits is not None:
         query = query.where(Subject.credits == credits)

@@ -33,10 +33,10 @@ def get_subject_sections(
     query = (
         select(Course)
         .join(Subject)
-        .where(Course.subject_id == Subject.id, Subject.code == subject_code)
+        .where(Subject.code == subject_code)
     )
     if year is not None:
-        query = query.join(Term).where(Term.id == Course.term_id, Term.year == year)
+        query = query.join(Term).where(Term.year == year)
 
         if period is not None:
             query = query.where(Term.period == period)
