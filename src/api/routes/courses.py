@@ -85,7 +85,7 @@ def get_courses(
     return paginate(db, query)
 
 
-@course_router.get("/{id}")
+@course_router.get("/{id}/")
 def get_course(id: int, db: Session = Depends(get_db)) -> Course:
     course = db.exec(select(Course).where(Course.id == id)).one_or_none()
     if course is None:
@@ -95,7 +95,7 @@ def get_course(id: int, db: Session = Depends(get_db)) -> Course:
     return course
 
 
-@course_router.get("/{id}/banner")
+@course_router.get("/{id}/banner/")
 def get_course_banner(id: int, db: Session = Depends(get_db)) -> list:
     course = db.exec(select(Course).where(Course.id == id)).one_or_none()
     if course is None:
