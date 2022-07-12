@@ -6,6 +6,7 @@ services:
     volumes:
       - ./src:/workspace/src
       - ./readme.md:/workspace/readme.md
+      - ./log:/workspace/log
     command: [ "uvicorn", "--port", "8000", "--host", "0.0.0.0", "--reload", "src.api:app" ]
 
   docs:

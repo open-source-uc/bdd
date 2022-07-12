@@ -12,3 +12,4 @@ RUN poetry install
 
 COPY readme.md ./
 COPY src/ src/
+COPY scripts/ scripts/

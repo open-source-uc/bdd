@@ -11,7 +11,9 @@ class ScrappedSubject(TypedDict):
     description: Optional[str]
     syllabus: str
     requirements: List[List[str]]
-    equivalences: List[str]
+    prerequisites_raw: str
+    equivalencies: List[List[str]]
+    equivalencies_raw: str
     relationship: str
     restrictions: List[Tuple[str, str]]
 

@@ -16,7 +16,7 @@ SQLAlchemy:
     from sqlmodel import SQLModel, Field, Relationship
 
 
-    class Wizard(SQLModel, table=True):
+    class Wizard(SQLModel, table=True): # type: ignore  # noqa
         id: Optional[int] = Field(default=None, primary_key=True)
         name: str
         level: int = 0
@@ -51,7 +51,7 @@ En varios casos, uno puede interactuar con SQLAlchemy directamente,
 como por ejemplo, en `Relations` se puede usar `sa_relationship_kwargs`:
 
 ```python hl_lines="4"
-class Wand(SQLModel, table=True):
+class Wand(SQLModel, table=True): # type: ignore  # noqa
     id: Optional[int] = Field(primary_key=True, default=None)
     wizard_id: int = Field(foreign_key="wizard.id", default=None)
     wizard: Wizard = Relationship(sa_relationship_kwargs=dict(lazy="joined"))

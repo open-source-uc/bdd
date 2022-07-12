@@ -6,12 +6,13 @@ Help() {
 }
 
 dk_env=dev
-dumpfile=$1
+dumpfile=0
 
-while getopts hp option; do
+while getopts hpf: option; do
     case $option in
         h) Help; exit;;
-        p) env=prod;;
+        p) dk_env=prod;;
+        f) dumpfile="$OPTARG";;
    esac
 done
 
@@ -21,4 +22,4 @@ fi
 
 docker exec -i \
     bdd-uc-${dk_env}_postgres_1 pg_restore \
-    -U user -d database --clean --no-owner < $1
+    -U user -d database --clean --no-owner < "$dumpfile"

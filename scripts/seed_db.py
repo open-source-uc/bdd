@@ -10,14 +10,17 @@ load_dotenv()
 import asyncio
 from time import time
 
-from fullscrapers import buscacursos, catalogo, initialize_log
 from sqlmodel import Session
 
 from src.db import create_db, engine
+from src.scrapers.jobs import buscacursos, catalogo, initialize_log
 
 # Start script
 initialize_log()
-create_db()
+create_db(clean=False)  # clean resetea la BD
+
+# Remove production flag
+sys.argv.remove("-p")
 
 with Session(engine) as session:
     init_time = time()

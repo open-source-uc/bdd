@@ -19,9 +19,11 @@ asyncio.run(main())
 
 import html
 import re
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Union
 
 import bs4
+from sympy import Symbol, symbols
+from sympy.logic.boolalg import And, Or, to_dnf
 
 from .utils import clean_text, gather_routines, run_parse_strategy, tag_to_int_value
 
@@ -82,24 +84,74 @@ def find_text_by_table_key(soup: "bs4.BeautifulSoup", key: "str"):
     return None
 
 
-def parse_requirements(requirements_text: str):
-    # Los requisitos tienen forma ((A y B) o (A y C))
+def get_formula(elements_list: list[str], req_dict: dict[str, Symbol]):
+    """Convierte una lista de componentes lógicos ['(', ')', '<sigla>', 'y', 'o']
+    en una BooleanFunction de Sympy (fórmula con semántica).
+    La función se llama recursivamente para cada grupo delimitado por paréntesis.
+    """
+    relation_func: Optional[Callable] = None
+    variables = []
+    while len(elements_list) != 0:
+        el = elements_list.pop(0)
+        if el == "":
+            continue
+        elif el == "(":
+            variables.append(get_formula(elements_list, req_dict))
+        elif el == ")":
+            if relation_func is not None:
+                return relation_func(*variables)
+            return variables[0]
+        elif el == "y":
+            relation_func = And
+        elif el == "o":
+            relation_func = Or
+        else:
+            variables.append(req_dict[el])
+
+    if relation_func is not None:
+        return relation_func(*variables)
+    return variables[0]
+
+
+def parse_requirements_groups(requirements_text: str):
+    """Transforma los requisitos en una fórmula lógica,
+    la convierte a DNF y retorna la lista de grupos DNF.
+    Los requisitos tienen la forma "((A y B) o (A y C) o D(c)) y E"
+    Co-requisitos se retornan con una 'c' al final de la sigla.
+    """
     requirements = []
     if requirements_text != "No tiene":
-        or_groups = requirements_text.split("o")
-        for group in map(str.strip, or_groups):
-            requirements.append([c.strip() for c in group.strip("()").split("y")])
+        # Primero se crea una lista con los componentes lógicos: '(', ')', '<sigla>', 'y', 'o'.
+        req_parts = (
+            requirements_text.replace("(c)", "c")
+            .replace("(", "#(#")
+            .replace(")", "#)#")
+            .replace(" ", "#")
+            .split("#")
+        )
+
+        req_list = [x for x in set(req_parts) if x not in ["", "y", "o", "(", ")"]]
+        syms = symbols(":" + str(len(req_list)))
+        req_dict = {}
+        for i, code in enumerate(req_list):
+            req_dict[code] = syms[i]
+
+        # Se convierte a una fórmula lógica (sympy BooleanFunction) y luego a DNF.
+        formula = to_dnf(get_formula(req_parts, req_dict))
+
+        # Se reemplazan las variables lógicas por las siglas.
+        for group_str in str(formula).split("|"):
+            group = []
+            group_syms = group_str.strip("( )").split(" & ")
+            for sym_name in group_syms:
+                group.append(req_list[int(sym_name)])
+            requirements.append(group)
+
     return requirements
 
 
-def parse_equivalences(equivalences_text: str):
-    if equivalences_text == "No tiene":
-        return []
-    return [e.strip() for e in equivalences_text[1:-2].split("o")]
-
-
 def parse_relationship(relationship_text: str):
-    return relationship_text if relationship_text != "No tiene" else None
+    return relationship_text == "y"
 
 
 RESTRICTIONS_RE = re.compile(r"\(\s*([^\(]*?)\s*=\s*([^\)]*?)\s*\)")
@@ -121,11 +173,13 @@ async def get_additional_info(code: str, *, session: "Session"):
     # TODO: limpiar esto
     requirements_text = find_text_by_table_key(soup, "Prerrequisitos")
     if requirements_text:
-        data["requirements"] = parse_requirements(requirements_text)
+        data["prerequisites_raw"] = requirements_text
+        data["requirements"] = parse_requirements_groups(requirements_text)
 
-    equivalences_text = find_text_by_table_key(soup, "Equivalencias")
-    if equivalences_text:
-        data["equivalences"] = parse_equivalences(equivalences_text)
+    equivalencies_text = find_text_by_table_key(soup, "Equivalencias")
+    if equivalencies_text:
+        data["equivalencies_raw"] = equivalencies_text
+        data["equivalencies"] = parse_requirements_groups(equivalencies_text)
 
     relationship_text = find_text_by_table_key(soup, "Relación")
     if relationship_text:
@@ -152,18 +206,18 @@ async def get_syllabus(code: str, *, session: "Session"):
     return {}
 
 
-async def parse_row(row: "bs4.element.Tag", session: "Session"):
+async def parse_row(row: "bs4.element.Tag", session: "Session", all_info: bool):
     data = run_parse_strategy(COLUMNS_STRATEGIES, row.findChildren("td", recursive=False))
     code = data.get("code")
-    if code is not None:
+    if all_info and code is not None:
         data |= await get_additional_info(code, session=session)
         data |= await get_syllabus(code, session=session)
     return data
 
 
 async def get_subjects(
-    code: str, *, session: "Session", all_subjects: bool = True
-) -> "List[ScrappedSubject]":
+    code: str, *, session: "Session", all_subjects: bool = True, all_info: bool = True
+) -> "list[ScrappedSubject]":
     "Obtiene los ramos por su sigla"
     subject_params: Dict[str, Union[str, int]] = {
         "sigla": code,
@@ -173,4 +227,6 @@ async def get_subjects(
     async with session.post("/index.php", params=params) as response:
         body = await response.read()
     soup = bs4.BeautifulSoup(body, "lxml")
-    return await gather_routines([parse_row(row, session) for row in soup.select("tbody > tr")])
+    return await gather_routines(
+        [parse_row(row, session, all_info) for row in soup.select("tbody > tr")]
+    )

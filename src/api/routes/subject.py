@@ -16,7 +16,35 @@ def get_subjects(db: Session = Depends(get_db)):
     return paginate(db, select(Subject))
 
 
-@subject_router.get("/{id}/requirements/", response_model=List[List[Subject]])
+@subject_router.get("/{subject_code}", response_model=Subject)
+def get_subject(subject_code: str, db: Session = Depends(get_db)):
+    s = db.exec(select(Subject).where(Subject.code == subject_code)).one_or_none()
+    if s is None:
+        raise HTTPException(404)
+
+    # TODO: Subject should include requirements and school
+    return s
+
+
+@subject_router.get("/{subject_code}/sections", response_model=Page[Course])
+def get_subject_sections(
+    subject_code: str, year: int = None, period: str = None, db: Session = Depends(get_db)
+):
+    query = (
+        select(Course)
+        .join(Subject)
+        .where(Course.subject_id == Subject.id, Subject.code == subject_code)
+    )
+    if year is not None:
+        query = query.join(Term).where(Term.id == Course.term_id, Term.year == year)
+
+        if period is not None:
+            query = query.where(Term.period == period)
+
+    return paginate(db, query)
+
+
+@subject_router.get("/{id}/requirements/", response_model=list[list[Subject]])
 def get_subject_requirements(id: int, db: Session = Depends(get_db)):
     s = db.exec(select(Subject).where(Subject.id == id)).one_or_none()
     if s is None:

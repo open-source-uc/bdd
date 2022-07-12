@@ -2,29 +2,21 @@ from sqlmodel import SQLModel
 from sqlmodel import create_engine as _create_engine
 
 from ..config import config
-from .schema import (
+from .events import UniversityEvents
+from .places import Campus, CategoryOfPlace, Place, PlaceCategory
+from .subject import (
     Campus,
-    CategoryOfPlace,
     ClassSchedule,
     Course,
     CoursesTeachers,
     DayEnum,
-    Faculty,
-    PeriodEnum,
-    Place,
-    PlaceCategory,
-    PrerequisitesAndGroupElement,
-    PrerequisitesOrGroupElement,
-    RequirementRelationEnum,
-    RestrictionsAndGroup,
-    RestrictionsOrGroup,
     School,
     Subject,
     SubjectEquivalencies,
+    SubjectPrerequisites,
     Teacher,
-    Term,
-    UniversityEvents,
 )
+from .term import PeriodEnum, Term
 
 
 def create_engine(*, user: str, password: str, db_name: str, host: str, driver: str = "postgresql"):
