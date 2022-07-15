@@ -6,27 +6,26 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from sqlmodel import Session, select
 
 from ...db import Course, PeriodEnum, Subject, Term
+from ..models import SubjectResponse, SubjectFullResponse, CourseResponse
 from ..utils import get_db
 
 subject_router = APIRouter()
 
 
-@subject_router.get("/", response_model=Page[Subject])
+@subject_router.get("/", response_model=Page[SubjectResponse])
 def get_subjects(db: Session = Depends(get_db)):
     return paginate(db, select(Subject))
 
 
-@subject_router.get("/{subject_code}/", response_model=Subject)
+@subject_router.get("/{subject_code}/", response_model=SubjectFullResponse)
 def get_subject(subject_code: str, db: Session = Depends(get_db)):
     s = db.exec(select(Subject).where(Subject.code == subject_code)).one_or_none()
     if s is None:
         raise HTTPException(404)
-
-    # TODO: Subject should include requirements and school
     return s
 
 
-@subject_router.get("/{subject_code}/sections/", response_model=Page[Course])
+@subject_router.get("/{subject_code}/sections/", response_model=Page[CourseResponse])
 def get_subject_sections(
     subject_code: str, year: int = None, period: str = None, db: Session = Depends(get_db)
 ):

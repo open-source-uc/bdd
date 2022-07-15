@@ -46,6 +46,18 @@ class SubjectFullResponse(SubjectResponse):
 
 class CourseResponse(SQLModel):
     id: int
+    subject: SubjectMinimal
+    term: TermMinimal
+    section: int
+    nrc: str
+    schedule_summary: Optional[str]
+    campus: Campus
+    available_quota: Optional[int]
+    total_quota: Optional[int]
+    teachers: List[Teacher]
+
+class CourseFullResponse(SQLModel):
+    id: int
     subject: SubjectResponse
     term: TermMinimal
     section: int

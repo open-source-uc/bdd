@@ -7,6 +7,7 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from sqlmodel import Session, col, select
 
 from ...db import Course, Subject
+from ..models import CourseResponse, CourseFullResponse
 from ..utils import get_db
 
 course_router = APIRouter()
@@ -15,7 +16,7 @@ NUMBERS_EXP = re.compile(r"^\d{1,4}$")
 SUBJECT_CODE_EXP = re.compile(r"^[a-zA-Z]{1,3}(\d{3,4}[a-zA-Z]?|\d{0,4})$")
 
 
-@course_router.get("/", response_model=Page[Course])
+@course_router.get("/", response_model=Page[CourseResponse])
 def get_courses(
     db: Session = Depends(get_db),
     q: Union[str, None] = Query(
@@ -87,24 +88,12 @@ def get_courses(
     return paginate(db, query)
 
 
-@course_router.get("/{id}/")
+@course_router.get("/{id}/", response_model=CourseFullResponse)
 def get_course(id: int, db: Session = Depends(get_db)) -> Course:
-    course = db.exec(select(Course).where(Course.id == id)).one_or_none()
+    course = db.get(Course, id)
     if course is None:
         raise HTTPException(404)
-
-    # TODO: include schedule, related, etc
     return course
-
-
-@course_router.get("/{id}/banner/")
-def get_course_banner(id: int, db: Session = Depends(get_db)) -> list:
-    course = db.exec(select(Course).where(Course.id == id)).one_or_none()
-    if course is None:
-        raise HTTPException(404)
-
-    # TODO: return banner info (quotas)
-    return []
 
 
 add_pagination(course_router)
