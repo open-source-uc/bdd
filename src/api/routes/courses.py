@@ -7,7 +7,7 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from sqlmodel import Session, col, select
 
 from ...db import Course, Subject
-from ..models import CourseResponse, CourseFullResponse
+from ..models import CourseFullResponse, CourseResponse
 from ..utils import get_db
 
 course_router = APIRouter()
