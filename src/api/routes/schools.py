@@ -24,7 +24,7 @@ def get_school(id: int, db: Session = Depends(get_db)) -> School:
 
 @school_router.get("/{school_id}/subjects/", response_model=Page[Subject])
 async def get_school_subjects(school_id: int, db: Session = Depends(get_db)):
-    return paginate(db, select(Subject).where(School.id == school_id))
+    return paginate(db, select(Subject).where(Subject.school_id == school_id))
 
 
 add_pagination(school_router)
