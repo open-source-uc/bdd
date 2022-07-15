@@ -4,6 +4,7 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from sqlmodel import Session, select
 
 from ...db import School, Subject
+from ..models import SubjectMinimal
 from ..utils import get_db
 
 school_router = APIRouter()
@@ -22,7 +23,7 @@ def get_school(id: int, db: Session = Depends(get_db)) -> School:
     return school
 
 
-@school_router.get("/{school_id}/subjects/", response_model=Page[Subject])
+@school_router.get("/{school_id}/subjects/", response_model=Page[SubjectMinimal])
 async def get_school_subjects(school_id: int, db: Session = Depends(get_db)):
     return paginate(db, select(Subject).where(Subject.school_id == school_id))
 
