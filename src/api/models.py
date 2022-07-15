@@ -2,29 +2,34 @@ from typing import List, Optional
 
 from sqlmodel import SQLModel
 
-from ..db import Campus, Teacher, ClassSchedule
+from ..db import Campus, ClassSchedule, Teacher
 
 
 class TermMinimal(SQLModel):
     year: int
     period: str
 
+
 class SchoolMinimal(SQLModel):
     id: int
     name: str
+
 
 class SubjectMinimal(SQLModel):
     code: str
     name: str
 
+
 class EquivalencyResponse(SQLModel):
     group: int
     equivalence: SubjectMinimal
+
 
 class PrerequisteResponse(SQLModel):
     group: int
     is_corequisite: bool
     prerequisite: SubjectMinimal
+
 
 class SubjectResponse(SQLModel):
     id: int
@@ -37,12 +42,14 @@ class SubjectResponse(SQLModel):
     prerequisites: List[PrerequisteResponse]
     need_all_requirements: bool
 
+
 class SubjectFullResponse(SubjectResponse):
     is_active: Optional[bool]
     academic_level: Optional[str]
     syllabus: Optional[str]
     equivalencies: List[EquivalencyResponse]
     unlocks: List[SubjectMinimal]
+
 
 class CourseResponse(SQLModel):
     id: int
@@ -55,6 +62,7 @@ class CourseResponse(SQLModel):
     available_quota: Optional[int]
     total_quota: Optional[int]
     teachers: List[Teacher]
+
 
 class CourseFullResponse(SQLModel):
     id: int

@@ -69,7 +69,7 @@ class Subject(SQLModel, table=True):  # type: ignore  # noqa
     prerequisites: List[SubjectPrerequisites] = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[SubjectPrerequisites.subject_id]"},
     )
-    
+
     unlocks: List["Subject"] = Relationship(
         link_model=SubjectPrerequisites,
         sa_relationship_kwargs={

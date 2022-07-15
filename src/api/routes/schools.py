@@ -14,6 +14,7 @@ school_router = APIRouter()
 def get_schools(db: Session = Depends(get_db)):
     return paginate(db, select(School))
 
+
 @school_router.get("/{id}/")
 def get_school(id: int, db: Session = Depends(get_db)) -> School:
     school = db.exec(select(School).where(School.id == id)).one_or_none()

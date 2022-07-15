@@ -4,7 +4,7 @@ from fastapi_pagination.ext.sqlmodel import paginate
 from sqlmodel import Session, select
 
 from ...db import Course, Subject, Term
-from ..models import SubjectResponse, SubjectFullResponse, CourseResponse
+from ..models import CourseResponse, SubjectFullResponse, SubjectResponse
 from ..utils import get_db
 
 subject_router = APIRouter()
@@ -27,11 +27,7 @@ def get_subject(subject_code: str, db: Session = Depends(get_db)):
 def get_subject_sections(
     subject_code: str, year: int = None, period: str = None, db: Session = Depends(get_db)
 ):
-    query = (
-        select(Course)
-        .join(Subject)
-        .where(Subject.code == subject_code)
-    )
+    query = select(Course).join(Subject).where(Subject.code == subject_code)
     if year is not None:
         query = query.join(Term).where(Term.year == year)
 
