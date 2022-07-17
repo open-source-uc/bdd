@@ -42,10 +42,10 @@ def get_courses(
 
     query = select(Course).join(Subject)
     if q is not None:
-        if NUMBERS_EXP.match(query):
+        if NUMBERS_EXP.match(q):
             query = query.where(Course.nrc == q)
 
-        elif SUBJECT_CODE_EXP.match(query):
+        elif SUBJECT_CODE_EXP.match(q):
             query = query.where(col(Subject.code).startswith(q.upper()))
 
         else:
