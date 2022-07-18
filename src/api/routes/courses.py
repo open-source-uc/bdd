@@ -6,7 +6,8 @@ from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlmodel import paginate
 from sqlmodel import Session, col, select
 
-from ...db import Course, Subject, Term
+from ...db import Course, Subject
+from ..models import CourseFullResponse, CourseResponse
 from ..utils import get_db
 
 course_router = APIRouter()
@@ -15,7 +16,7 @@ NUMBERS_EXP = re.compile(r"^\d{1,4}$")
 SUBJECT_CODE_EXP = re.compile(r"^[a-zA-Z]{1,3}(\d{3,4}[a-zA-Z]?|\d{0,4})$")
 
 
-@course_router.get("/", response_model=Page[Course])
+@course_router.get("/", response_model=Page[CourseResponse])
 def get_courses(
     db: Session = Depends(get_db),
     q: Union[str, None] = Query(
@@ -37,12 +38,14 @@ def get_courses(
         False, description="Ignore schedule collisions with AYU and LAB modules"
     ),
 ):
-    query = select(Course).join(Subject).where(Course.subject_id == Subject.id)
+    """Search like Buscacursos or RamosUC"""
+
+    query = select(Course).join(Subject)
     if q is not None:
-        if NUMBERS_EXP.match(query):
+        if NUMBERS_EXP.match(q):
             query = query.where(Course.nrc == q)
 
-        elif SUBJECT_CODE_EXP.match(query):
+        elif SUBJECT_CODE_EXP.match(q):
             query = query.where(col(Subject.code).startswith(q.upper()))
 
         else:
@@ -51,7 +54,7 @@ def get_courses(
             )  # TODO: match teachers (or), case-insensitive, unaccent
 
     if term_id is not None:
-        query = query.join(Term).where(Course.term_id == Term.id, Term.id == term_id)
+        query = query.where(Course.term_id == term_id)
 
     if credits is not None:
         query = query.where(Subject.credits == credits)
@@ -85,24 +88,12 @@ def get_courses(
     return paginate(db, query)
 
 
-@course_router.get("/{id}")
+@course_router.get("/{id}/", response_model=CourseFullResponse)
 def get_course(id: int, db: Session = Depends(get_db)) -> Course:
-    course = db.exec(select(Course).where(Course.id == id)).one_or_none()
+    course = db.get(Course, id)
     if course is None:
         raise HTTPException(404)
-
-    # TODO: include schedule, related, etc
     return course
-
-
-@course_router.get("/{id}/banner")
-def get_course_banner(id: int, db: Session = Depends(get_db)) -> list:
-    course = db.exec(select(Course).where(Course.id == id)).one_or_none()
-    if course is None:
-        raise HTTPException(404)
-
-    # TODO: return banner info (quotas)
-    return []
 
 
 add_pagination(course_router)

@@ -23,6 +23,7 @@ lxml = "^4.6.3"
 aiohttp = {extras = ["speedups"], version = "^3.8.1"}
 aiohttp-client-cache = {extras = ["sqlite"], version = "^0.5.2"}
 sympy = "^1.10.1"
+SQLAlchemy = ">=1.4.17,<=1.4.35"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"

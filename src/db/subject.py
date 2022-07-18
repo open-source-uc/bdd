@@ -1,5 +1,4 @@
 import enum
-from datetime import date
 from typing import List, Optional
 
 from sqlalchemy import Column
@@ -22,6 +21,10 @@ class SubjectEquivalencies(SQLModel, table=True):  # type: ignore  # noqa
     equivalence_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
     group: int = Field(default=None, primary_key=True)
 
+    equivalence: "Subject" = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[SubjectEquivalencies.equivalence_id]"}
+    )
+
 
 class SubjectPrerequisites(SQLModel, table=True):  # type: ignore  # noqa
     """Join model for subject prerequisites, organized by groups.
@@ -31,6 +34,10 @@ class SubjectPrerequisites(SQLModel, table=True):  # type: ignore  # noqa
     prerequisite_id: int = Field(default=None, foreign_key="subject.id", primary_key=True)
     group: int = Field(default=None, primary_key=True)
     is_corequisite: bool
+
+    prerequisite: "Subject" = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[SubjectPrerequisites.prerequisite_id]"}
+    )
 
 
 class CoursesTeachers(SQLModel, table=True):  # type: ignore  # noqa
@@ -59,16 +66,11 @@ class Subject(SQLModel, table=True):  # type: ignore  # noqa
     need_all_requirements: bool = False  # Requirements relation
     is_active: Optional[bool] = None
 
-    prerequisites: List["Subject"] = Relationship(
-        back_populates="unlocks",
-        link_model=SubjectPrerequisites,
-        sa_relationship_kwargs={
-            "primaryjoin": "Subject.id==SubjectPrerequisites.subject_id",
-            "secondaryjoin": "Subject.id==SubjectPrerequisites.prerequisite_id",
-        },
+    prerequisites: List[SubjectPrerequisites] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[SubjectPrerequisites.subject_id]"},
     )
+
     unlocks: List["Subject"] = Relationship(
-        back_populates="prerequisites",
         link_model=SubjectPrerequisites,
         sa_relationship_kwargs={
             "primaryjoin": "Subject.id==SubjectPrerequisites.prerequisite_id",
@@ -76,12 +78,8 @@ class Subject(SQLModel, table=True):  # type: ignore  # noqa
         },
     )
 
-    equivalencies: List["Subject"] = Relationship(
-        link_model=SubjectEquivalencies,
-        sa_relationship_kwargs={
-            "primaryjoin": "Subject.id==SubjectEquivalencies.subject_id",
-            "secondaryjoin": "Subject.id==SubjectEquivalencies.equivalence_id",
-        },
+    equivalencies: List[SubjectEquivalencies] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[SubjectEquivalencies.subject_id]"},
     )
 
     # __table_args__ = (

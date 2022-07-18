@@ -9,12 +9,12 @@ if TYPE_CHECKING:
     ParseStrategy = Dict[str, Optional[Callable[[bs4.element.Tag], Any]]]
 
 
-def clean_text(tag: bs4.element.Tag) -> str:
+def clean_text(tag: "bs4.element.Tag") -> str:
     "Limpia el texto de un tag"
     return re.sub(r"\s{2,}", " ", tag.text).strip()
 
 
-def tag_to_int_value(tag: bs4.element.Tag) -> int:
+def tag_to_int_value(tag: "bs4.element.Tag") -> int:
     return int(clean_text(tag))
 
 
@@ -23,7 +23,7 @@ async def gather_routines(tasks: List[Coroutine]):
     return list(await asyncio.gather(*tasks))
 
 
-def run_parse_strategy(ps: ParseStrategy, tags: List[bs4.element.Tag]):
+def run_parse_strategy(ps: "ParseStrategy", tags: "List[bs4.element.Tag]"):
     """
     Corre funciones para obtener los datos en una lista de tags.
     Por ejemplo:

@@ -20,7 +20,7 @@ async def get_campuses(db: Session = Depends(get_db)):
 async def get_campus_places(campus_id: int, db: Session = Depends(get_db)):
     return paginate(
         db,
-        select(Place).join(Campus).where(Campus.id == Place.campus_id, Campus.id == campus_id),
+        select(Place).join(Campus).where(Campus.id == campus_id),
     )
 
 
